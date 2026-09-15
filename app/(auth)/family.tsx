@@ -1,15 +1,18 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { useAuth } from '../../lib/auth-context';
 import { createFamily, createInviteCode, joinFamilyByCode, JoinFamilyError } from '../../lib/api/family';
-import { colors, radius, spacing } from '../../lib/theme';
+import { useTheme } from '../../lib/theme-context';
+import { radius, spacing, type ColorPalette } from '../../lib/theme';
 
 type Mode = 'choose' | 'create' | 'created' | 'join';
 
 export default function FamilyScreen() {
   const { refresh, signOut } = useAuth();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [mode, setMode] = useState<Mode>('choose');
   const [familyName, setFamilyName] = useState('');
   const [code, setCode] = useState('');
@@ -98,7 +101,7 @@ export default function FamilyScreen() {
         />
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <TouchableOpacity style={styles.button} onPress={handleCreate} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>가족 만들기</Text>}
+          {loading ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.buttonText}>가족 만들기</Text>}
         </TouchableOpacity>
         <TouchableOpacity onPress={() => setMode('choose')} style={{ marginTop: spacing.lg }}>
           <Text style={styles.link}>뒤로</Text>
@@ -145,7 +148,7 @@ export default function FamilyScreen() {
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <TouchableOpacity style={styles.button} onPress={handleJoin} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>참여하기</Text>}
+        {loading ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.buttonText}>참여하기</Text>}
       </TouchableOpacity>
       <TouchableOpacity onPress={() => setMode('choose')} style={{ marginTop: spacing.lg }}>
         <Text style={styles.link}>뒤로</Text>
@@ -154,44 +157,46 @@ export default function FamilyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.xl, justifyContent: 'center' },
-  title: { fontSize: 20, fontWeight: '800', color: colors.ink, marginBottom: 8, textAlign: 'center' },
-  subtitle: { fontSize: 13, color: colors.inkSoft, textAlign: 'center', marginBottom: spacing.xl, lineHeight: 19 },
-  optionCard: {
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-  },
-  optionTitle: { fontSize: 15.5, fontWeight: '700', color: colors.ink, marginBottom: 4 },
-  optionBody: { fontSize: 12.5, color: colors.inkSoft, lineHeight: 18 },
-  input: {
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: colors.ink,
-    marginBottom: spacing.lg,
-  },
-  codeInput: { textAlign: 'center', fontSize: 24, fontWeight: '800', letterSpacing: 6 },
-  error: { color: colors.danger, fontSize: 12.5, marginBottom: spacing.md, textAlign: 'center' },
-  button: { backgroundColor: colors.ink, borderRadius: radius.md, paddingVertical: 15, alignItems: 'center' },
-  buttonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  link: { textAlign: 'center', color: colors.coral, fontSize: 13, fontWeight: '600' },
-  signOut: { textAlign: 'center', color: colors.inkFaint, fontSize: 12.5 },
-  codeBox: {
-    backgroundColor: colors.peach,
-    borderRadius: radius.lg,
-    paddingVertical: spacing.xl,
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  codeText: { fontSize: 34, fontWeight: '800', letterSpacing: 8, color: colors.ink },
-  codeHint: { fontSize: 12, color: colors.inkSoft, marginTop: 8, fontWeight: '600' },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.xl, justifyContent: 'center' },
+    title: { fontSize: 20, fontWeight: '800', color: colors.ink, marginBottom: 8, textAlign: 'center' },
+    subtitle: { fontSize: 13, color: colors.inkSoft, textAlign: 'center', marginBottom: spacing.xl, lineHeight: 19 },
+    optionCard: {
+      backgroundColor: colors.card,
+      borderRadius: radius.lg,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      padding: spacing.lg,
+      marginBottom: spacing.md,
+    },
+    optionTitle: { fontSize: 15.5, fontWeight: '700', color: colors.ink, marginBottom: 4 },
+    optionBody: { fontSize: 12.5, color: colors.inkSoft, lineHeight: 18 },
+    input: {
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      backgroundColor: colors.card,
+      borderRadius: radius.md,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      fontSize: 15,
+      color: colors.ink,
+      marginBottom: spacing.lg,
+    },
+    codeInput: { textAlign: 'center', fontSize: 24, fontWeight: '800', letterSpacing: 6 },
+    error: { color: colors.danger, fontSize: 12.5, marginBottom: spacing.md, textAlign: 'center' },
+    button: { backgroundColor: colors.ink, borderRadius: radius.md, paddingVertical: 15, alignItems: 'center' },
+    buttonText: { color: colors.bg, fontSize: 15, fontWeight: '700' },
+    link: { textAlign: 'center', color: colors.coral, fontSize: 13, fontWeight: '600' },
+    signOut: { textAlign: 'center', color: colors.inkFaint, fontSize: 12.5 },
+    codeBox: {
+      backgroundColor: colors.peach,
+      borderRadius: radius.lg,
+      paddingVertical: spacing.xl,
+      alignItems: 'center',
+      marginBottom: spacing.xl,
+    },
+    codeText: { fontSize: 34, fontWeight: '800', letterSpacing: 8, color: colors.ink },
+    codeHint: { fontSize: 12, color: colors.inkSoft, marginTop: 8, fontWeight: '600' },
+  });
+}

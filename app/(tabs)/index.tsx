@@ -1,13 +1,17 @@
+import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth-context';
 import { ageMonths, dPlus, parseISO, todayStart } from '../../lib/dates';
-import { colors, radius, spacing } from '../../lib/theme';
+import { useTheme } from '../../lib/theme-context';
+import { radius, spacing, type ColorPalette } from '../../lib/theme';
 
 export default function HomeScreen() {
   const { child, family, membership } = useAuth();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   if (!child) return null;
 
@@ -91,36 +95,35 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.lg },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: colors.peach,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: { fontSize: 20, fontWeight: '800', color: colors.coral },
-  name: { fontSize: 17, fontWeight: '800', color: colors.ink },
-  age: { fontSize: 12.5, color: colors.inkSoft, marginTop: 2 },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-  },
-  cardEyebrow: { fontSize: 11.5, fontWeight: '700', color: colors.inkSoft, marginBottom: 6 },
-  cardBody: { fontSize: 13.5, color: colors.ink, lineHeight: 19 },
-  inviteBtn: { marginTop: spacing.md },
-  inviteBtnText: { color: colors.coral, fontSize: 12.5, fontWeight: '700' },
-  linkBtn: { marginTop: spacing.md },
-  linkBtnText: { color: colors.coral, fontSize: 12.5, fontWeight: '700' },
-  noteCard: { backgroundColor: colors.butter, borderRadius: radius.lg, padding: spacing.lg },
-  noteTitle: { fontSize: 12.5, fontWeight: '800', color: colors.butterDeep, marginBottom: 6 },
-  noteBody: { fontSize: 12, color: colors.ink, lineHeight: 18 },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
+    header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.lg },
+    avatar: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      backgroundColor: colors.peach,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    avatarText: { fontSize: 20, fontWeight: '800', color: colors.coral },
+    name: { fontSize: 17, fontWeight: '800', color: colors.ink },
+    age: { fontSize: 12.5, color: colors.inkSoft, marginTop: 2 },
+    card: {
+      backgroundColor: colors.card,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: spacing.lg,
+      marginBottom: spacing.md,
+    },
+    cardEyebrow: { fontSize: 11.5, fontWeight: '700', color: colors.inkSoft, marginBottom: 6 },
+    cardBody: { fontSize: 13.5, color: colors.ink, lineHeight: 19 },
+    inviteBtn: { marginTop: spacing.md },
+    inviteBtnText: { color: colors.coral, fontSize: 12.5, fontWeight: '700' },
+    linkBtn: { marginTop: spacing.md },
+    linkBtnText: { color: colors.coral, fontSize: 12.5, fontWeight: '700' },
+  });
+}

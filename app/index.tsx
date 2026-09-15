@@ -1,11 +1,15 @@
+import { useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAuth } from '../lib/auth-context';
 import { isSupabaseConfigured } from '../lib/supabase';
-import { colors } from '../lib/theme';
+import { useTheme } from '../lib/theme-context';
+import type { ColorPalette } from '../lib/theme';
 
 export default function Index() {
   const { loading, session, family, child } = useAuth();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   if (!isSupabaseConfigured) {
     return (
@@ -32,8 +36,10 @@ export default function Index() {
   return <Redirect href="/(tabs)" />;
 }
 
-const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.bg },
-  title: { fontSize: 17, fontWeight: '800', marginBottom: 10, color: colors.ink },
-  body: { fontSize: 13.5, color: colors.inkSoft, textAlign: 'center', lineHeight: 20 },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: colors.bg },
+    title: { fontSize: 17, fontWeight: '800', marginBottom: 10, color: colors.ink },
+    body: { fontSize: 13.5, color: colors.inkSoft, textAlign: 'center', lineHeight: 20 },
+  });
+}

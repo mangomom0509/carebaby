@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../lib/auth-context';
 import { createChild } from '../lib/api/children';
-import { colors, radius, spacing } from '../lib/theme';
+import { useTheme } from '../lib/theme-context';
+import { radius, spacing, type ColorPalette } from '../lib/theme';
 import type { Gender } from '../lib/types';
 
 export default function OnboardingScreen() {
   const { family, refresh } = useAuth();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [name, setName] = useState('');
   const [birth, setBirth] = useState(''); // YYYY-MM-DD
   const [gender, setGender] = useState<Gender | null>(null);
@@ -71,43 +74,45 @@ export default function OnboardingScreen() {
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <TouchableOpacity style={[styles.button, !valid && styles.buttonDisabled]} onPress={submit} disabled={!valid || loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>시작하기</Text>}
+        {loading ? <ActivityIndicator color={colors.bg} /> : <Text style={styles.buttonText}>시작하기</Text>}
       </TouchableOpacity>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.xl, justifyContent: 'center' },
-  title: { fontSize: 20, fontWeight: '800', color: colors.ink, marginBottom: 8, textAlign: 'center' },
-  subtitle: { fontSize: 13, color: colors.inkSoft, textAlign: 'center', marginBottom: spacing.xl, lineHeight: 19 },
-  field: { marginBottom: spacing.lg },
-  label: { fontSize: 12.5, fontWeight: '700', color: colors.inkSoft, marginBottom: 6 },
-  input: {
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: colors.ink,
-  },
-  row: { flexDirection: 'row', gap: spacing.sm },
-  chip: {
-    flex: 1,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  chipActive: { borderColor: colors.peachDeep, backgroundColor: colors.peach },
-  chipText: { fontSize: 14, fontWeight: '600', color: colors.inkSoft },
-  chipTextActive: { color: colors.ink },
-  error: { color: colors.danger, fontSize: 12.5, marginBottom: spacing.md, textAlign: 'center' },
-  button: { backgroundColor: colors.ink, borderRadius: radius.md, paddingVertical: 15, alignItems: 'center', marginTop: spacing.sm },
-  buttonDisabled: { opacity: 0.4 },
-  buttonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.xl, justifyContent: 'center' },
+    title: { fontSize: 20, fontWeight: '800', color: colors.ink, marginBottom: 8, textAlign: 'center' },
+    subtitle: { fontSize: 13, color: colors.inkSoft, textAlign: 'center', marginBottom: spacing.xl, lineHeight: 19 },
+    field: { marginBottom: spacing.lg },
+    label: { fontSize: 12.5, fontWeight: '700', color: colors.inkSoft, marginBottom: 6 },
+    input: {
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      backgroundColor: colors.card,
+      borderRadius: radius.md,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      fontSize: 15,
+      color: colors.ink,
+    },
+    row: { flexDirection: 'row', gap: spacing.sm },
+    chip: {
+      flex: 1,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      backgroundColor: colors.card,
+      borderRadius: radius.md,
+      paddingVertical: 12,
+      alignItems: 'center',
+    },
+    chipActive: { borderColor: colors.peachDeep, backgroundColor: colors.peach },
+    chipText: { fontSize: 14, fontWeight: '600', color: colors.inkSoft },
+    chipTextActive: { color: colors.ink },
+    error: { color: colors.danger, fontSize: 12.5, marginBottom: spacing.md, textAlign: 'center' },
+    button: { backgroundColor: colors.ink, borderRadius: radius.md, paddingVertical: 15, alignItems: 'center', marginTop: spacing.sm },
+    buttonDisabled: { opacity: 0.4 },
+    buttonText: { color: colors.bg, fontSize: 15, fontWeight: '700' },
+  });
+}

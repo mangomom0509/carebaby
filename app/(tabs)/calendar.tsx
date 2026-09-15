@@ -18,7 +18,8 @@ import { deletePhotoForDate, getSignedUrls, listPhotosForMonth, uploadPhotoForDa
 import { listRecordsForDate } from '../../lib/api/records';
 import { checkupDueDate, CHECKUPS } from '../../lib/checkups';
 import { pad, parseISO, toISO, todayStart } from '../../lib/dates';
-import { colors, radius, spacing } from '../../lib/theme';
+import { useTheme } from '../../lib/theme-context';
+import { radius, spacing, type ColorPalette } from '../../lib/theme';
 import type { CheckupDone, PhotoEntry, RecordEntry } from '../../lib/types';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -47,6 +48,8 @@ function firstWeekday(year: number, month: number): number {
 export default function CalendarScreen() {
   const { child } = useAuth();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const today = useMemo(() => todayStart(), []);
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1); // 1-12
@@ -259,6 +262,8 @@ export default function CalendarScreen() {
           photoUrl={photoByDate[selectedDate] ? urls[photoByDate[selectedDate].storage_path] : undefined}
           onClose={() => setSelectedDate(null)}
           onChanged={load}
+          colors={colors}
+          styles={styles}
         />
       ) : null}
     </View>
@@ -272,6 +277,8 @@ function DayDetailModal({
   photoUrl,
   onClose,
   onChanged,
+  colors,
+  styles,
 }: {
   childId: string;
   date: string;
@@ -279,6 +286,8 @@ function DayDetailModal({
   photoUrl?: string;
   onClose: () => void;
   onChanged: () => Promise<void>;
+  colors: ColorPalette;
+  styles: ReturnType<typeof createStyles>;
 }) {
   const [records, setRecords] = useState<RecordEntry[]>([]);
   const [loadingRecords, setLoadingRecords] = useState(true);
@@ -385,100 +394,102 @@ function DayDetailModal({
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.lg },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xl, marginBottom: spacing.md },
-  navArrow: { fontSize: 24, color: colors.inkSoft, fontWeight: '700', paddingHorizontal: spacing.md },
-  title: { fontSize: 18, fontWeight: '800', color: colors.ink },
-  collageToggle: { alignSelf: 'flex-end', marginBottom: spacing.md },
-  collageToggleText: { fontSize: 12.5, fontWeight: '700', color: colors.coral },
-  weekdayRow: { flexDirection: 'row' },
-  weekdayText: { flex: 1, textAlign: 'center', fontSize: 11.5, fontWeight: '700', color: colors.inkFaint, marginBottom: spacing.xs },
-  grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  dayCell: { width: '14.28%', aspectRatio: 0.8, alignItems: 'center', padding: 3 },
-  dayThumb: { width: '100%', flex: 1, borderRadius: radius.sm },
-  dayThumbEmpty: { backgroundColor: colors.line },
-  checkupDot: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.skyDeep,
-    borderWidth: 1,
-    borderColor: colors.card,
-  },
-  dayNum: { fontSize: 11, color: colors.inkSoft, marginTop: 2 },
-  dayNumToday: { color: colors.coral, fontWeight: '800' },
-  checkupSection: {
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: spacing.md,
-    marginTop: spacing.lg,
-  },
-  checkupSectionTitle: { fontSize: 13.5, fontWeight: '800', color: colors.ink, paddingHorizontal: spacing.xs },
-  checkupSectionHint: { fontSize: 11, color: colors.inkFaint, marginTop: 2, marginBottom: spacing.sm, paddingHorizontal: spacing.xs },
-  checkupRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: 10,
-    paddingHorizontal: spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-  },
-  checkupCheckbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkupCheckboxDone: { backgroundColor: colors.mintDeep, borderColor: colors.mintDeep },
-  checkupCheckboxMark: { color: '#fff', fontSize: 13, fontWeight: '800' },
-  checkupLabel: { fontSize: 13.5, fontWeight: '700', color: colors.ink },
-  checkupAge: { fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
-  checkupStatus: { fontSize: 11.5, fontWeight: '700', color: colors.inkFaint },
-  checkupStatusDone: { color: colors.mintDeep },
-  checkupStatusDue: { color: colors.coral },
-  empty: { textAlign: 'center', color: colors.inkFaint, fontSize: 12.5, marginTop: spacing.xl },
-  collageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, paddingBottom: spacing.xl },
-  collageCell: { width: '31%', alignItems: 'center' },
-  collageImage: { width: '100%', aspectRatio: 1, borderRadius: radius.md },
-  collageDate: { fontSize: 11, color: colors.inkSoft, marginTop: 4 },
-  imagePlaceholder: { backgroundColor: colors.line, alignItems: 'center', justifyContent: 'center' },
-  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalCard: {
-    backgroundColor: colors.card,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    padding: spacing.lg,
-    maxHeight: '85%',
-  },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
-  modalTitle: { fontSize: 17, fontWeight: '800', color: colors.ink },
-  modalClose: { fontSize: 13, color: colors.inkSoft, fontWeight: '600' },
-  modalPhoto: { width: '100%', aspectRatio: 1, borderRadius: radius.lg },
-  modalPhotoActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
-  modalBtn: { flex: 1, backgroundColor: colors.ink, borderRadius: radius.md, paddingVertical: 12, alignItems: 'center' },
-  modalBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  modalBtnDanger: { backgroundColor: colors.peach },
-  modalBtnDangerText: { color: colors.danger },
-  modalSectionTitle: { fontSize: 14, fontWeight: '800', color: colors.ink, marginTop: spacing.xl, marginBottom: spacing.sm },
-  recordRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-  },
-  recordTime: { fontSize: 12, fontWeight: '700', color: colors.inkSoft, width: 44 },
-  recordLabel: { fontSize: 13, fontWeight: '600', color: colors.ink, flex: 1 },
-  recordAmount: { fontSize: 12, color: colors.inkSoft },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.lg },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xl, marginBottom: spacing.md },
+    navArrow: { fontSize: 24, color: colors.inkSoft, fontWeight: '700', paddingHorizontal: spacing.md },
+    title: { fontSize: 18, fontWeight: '800', color: colors.ink },
+    collageToggle: { alignSelf: 'flex-end', marginBottom: spacing.md },
+    collageToggleText: { fontSize: 12.5, fontWeight: '700', color: colors.coral },
+    weekdayRow: { flexDirection: 'row' },
+    weekdayText: { flex: 1, textAlign: 'center', fontSize: 11.5, fontWeight: '700', color: colors.inkFaint, marginBottom: spacing.xs },
+    grid: { flexDirection: 'row', flexWrap: 'wrap' },
+    dayCell: { width: '14.28%', aspectRatio: 0.8, alignItems: 'center', padding: 3 },
+    dayThumb: { width: '100%', flex: 1, borderRadius: radius.sm },
+    dayThumbEmpty: { backgroundColor: colors.line },
+    checkupDot: {
+      position: 'absolute',
+      top: 2,
+      right: 2,
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.skyDeep,
+      borderWidth: 1,
+      borderColor: colors.card,
+    },
+    dayNum: { fontSize: 11, color: colors.inkSoft, marginTop: 2 },
+    dayNumToday: { color: colors.coral, fontWeight: '800' },
+    checkupSection: {
+      backgroundColor: colors.card,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: spacing.md,
+      marginTop: spacing.lg,
+    },
+    checkupSectionTitle: { fontSize: 13.5, fontWeight: '800', color: colors.ink, paddingHorizontal: spacing.xs },
+    checkupSectionHint: { fontSize: 11, color: colors.inkFaint, marginTop: 2, marginBottom: spacing.sm, paddingHorizontal: spacing.xs },
+    checkupRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      paddingVertical: 10,
+      paddingHorizontal: spacing.xs,
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+    },
+    checkupCheckbox: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    checkupCheckboxDone: { backgroundColor: colors.mintDeep, borderColor: colors.mintDeep },
+    checkupCheckboxMark: { color: '#fff', fontSize: 13, fontWeight: '800' },
+    checkupLabel: { fontSize: 13.5, fontWeight: '700', color: colors.ink },
+    checkupAge: { fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
+    checkupStatus: { fontSize: 11.5, fontWeight: '700', color: colors.inkFaint },
+    checkupStatusDone: { color: colors.mintDeep },
+    checkupStatusDue: { color: colors.coral },
+    empty: { textAlign: 'center', color: colors.inkFaint, fontSize: 12.5, marginTop: spacing.xl },
+    collageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, paddingBottom: spacing.xl },
+    collageCell: { width: '31%', alignItems: 'center' },
+    collageImage: { width: '100%', aspectRatio: 1, borderRadius: radius.md },
+    collageDate: { fontSize: 11, color: colors.inkSoft, marginTop: 4 },
+    imagePlaceholder: { backgroundColor: colors.line, alignItems: 'center', justifyContent: 'center' },
+    modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+    modalCard: {
+      backgroundColor: colors.card,
+      borderTopLeftRadius: radius.lg,
+      borderTopRightRadius: radius.lg,
+      padding: spacing.lg,
+      maxHeight: '85%',
+    },
+    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
+    modalTitle: { fontSize: 17, fontWeight: '800', color: colors.ink },
+    modalClose: { fontSize: 13, color: colors.inkSoft, fontWeight: '600' },
+    modalPhoto: { width: '100%', aspectRatio: 1, borderRadius: radius.lg },
+    modalPhotoActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+    modalBtn: { flex: 1, backgroundColor: colors.ink, borderRadius: radius.md, paddingVertical: 12, alignItems: 'center' },
+    modalBtnText: { color: colors.bg, fontSize: 13, fontWeight: '700' },
+    modalBtnDanger: { backgroundColor: colors.peach },
+    modalBtnDangerText: { color: colors.danger },
+    modalSectionTitle: { fontSize: 14, fontWeight: '800', color: colors.ink, marginTop: spacing.xl, marginBottom: spacing.sm },
+    recordRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      paddingVertical: 8,
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+    },
+    recordTime: { fontSize: 12, fontWeight: '700', color: colors.inkSoft, width: 44 },
+    recordLabel: { fontSize: 13, fontWeight: '600', color: colors.ink, flex: 1 },
+    recordAmount: { fontSize: 12, color: colors.inkSoft },
+  });
+}

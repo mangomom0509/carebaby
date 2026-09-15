@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Link, router } from 'expo-router';
 import { supabase } from '../../lib/supabase';
-import { colors, radius, spacing } from '../../lib/theme';
+import { useTheme } from '../../lib/theme-context';
+import { radius, spacing, type ColorPalette } from '../../lib/theme';
 
 export default function SignupScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -85,30 +88,32 @@ export default function SignupScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.xl, justifyContent: 'center' },
-  logo: { fontSize: 30, fontWeight: '800', color: colors.ink, textAlign: 'center', marginBottom: spacing.sm },
-  subtitle: { fontSize: 13.5, color: colors.inkSoft, textAlign: 'center', marginBottom: spacing.xl * 1.5, lineHeight: 20 },
-  field: { marginBottom: spacing.lg },
-  label: { fontSize: 12.5, fontWeight: '700', color: colors.inkSoft, marginBottom: 6 },
-  input: {
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: colors.ink,
-  },
-  error: { color: colors.danger, fontSize: 12.5, marginBottom: spacing.md, textAlign: 'center' },
-  button: {
-    backgroundColor: colors.ink,
-    borderRadius: radius.md,
-    paddingVertical: 15,
-    alignItems: 'center',
-    marginTop: spacing.sm,
-  },
-  buttonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  link: { textAlign: 'center', color: colors.coral, fontSize: 13, marginTop: spacing.lg, fontWeight: '600' },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.xl, justifyContent: 'center' },
+    logo: { fontSize: 30, fontWeight: '800', color: colors.ink, textAlign: 'center', marginBottom: spacing.sm },
+    subtitle: { fontSize: 13.5, color: colors.inkSoft, textAlign: 'center', marginBottom: spacing.xl * 1.5, lineHeight: 20 },
+    field: { marginBottom: spacing.lg },
+    label: { fontSize: 12.5, fontWeight: '700', color: colors.inkSoft, marginBottom: 6 },
+    input: {
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      backgroundColor: colors.card,
+      borderRadius: radius.md,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      fontSize: 15,
+      color: colors.ink,
+    },
+    error: { color: colors.danger, fontSize: 12.5, marginBottom: spacing.md, textAlign: 'center' },
+    button: {
+      backgroundColor: colors.ink,
+      borderRadius: radius.md,
+      paddingVertical: 15,
+      alignItems: 'center',
+      marginTop: spacing.sm,
+    },
+    buttonText: { color: colors.bg, fontSize: 15, fontWeight: '700' },
+    link: { textAlign: 'center', color: colors.coral, fontSize: 13, marginTop: spacing.lg, fontWeight: '600' },
+  });
+}

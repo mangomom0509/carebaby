@@ -13,7 +13,8 @@ import {
   unlogScheduleItem,
 } from '../lib/api/schedule';
 import { toISO, todayStart } from '../lib/dates';
-import { colors, radius, spacing } from '../lib/theme';
+import { useTheme } from '../lib/theme-context';
+import { radius, spacing, type ColorPalette } from '../lib/theme';
 import type { ScheduleLogEntry, ScheduleTemplateItem } from '../lib/types';
 
 function nowTime(): string {
@@ -35,6 +36,8 @@ function diffLabel(planned: string, actual: string): string {
 export default function ScheduleScreen() {
   const { child } = useAuth();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const todayIso = useMemo(() => toISO(todayStart()), []);
   const [template, setTemplate] = useState<ScheduleTemplateItem[]>([]);
   const [logs, setLogs] = useState<Record<string, ScheduleLogEntry>>({});
@@ -206,7 +209,7 @@ export default function ScheduleScreen() {
                 />
               </View>
               <TouchableOpacity style={styles.addBtn} onPress={addItem} disabled={busyId === 'new'}>
-                {busyId === 'new' ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.addBtnText}>추가하기</Text>}
+                {busyId === 'new' ? <ActivityIndicator color={colors.bg} size="small" /> : <Text style={styles.addBtnText}>추가하기</Text>}
               </TouchableOpacity>
             </View>
           ) : null}
@@ -234,7 +237,7 @@ export default function ScheduleScreen() {
                   <Text style={styles.modalBtnGhostText}>취소</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.modalBtn} onPress={saveEdit} disabled={savingEdit}>
-                  {savingEdit ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.modalBtnText}>저장</Text>}
+                  {savingEdit ? <ActivityIndicator color={colors.bg} size="small" /> : <Text style={styles.modalBtnText}>저장</Text>}
                 </TouchableOpacity>
               </View>
             </View>
@@ -245,82 +248,84 @@ export default function ScheduleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
-  back: { fontSize: 14, color: colors.inkSoft, fontWeight: '600' },
-  title: { fontSize: 17, fontWeight: '800', color: colors.ink },
-  manageToggle: { fontSize: 13, color: colors.coral, fontWeight: '700' },
-  empty: { textAlign: 'center', color: colors.inkFaint, fontSize: 12.5, marginTop: spacing.xl },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    marginBottom: spacing.sm,
-    padding: spacing.md,
-  },
-  rowMain: { flex: 1 },
-  checkbox: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxDone: { backgroundColor: colors.mintDeep, borderColor: colors.mintDeep },
-  checkboxMark: { color: '#fff', fontSize: 14, fontWeight: '800' },
-  rowLabel: { fontSize: 14, fontWeight: '700', color: colors.ink },
-  rowTime: { fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
-  deleteBtn: { paddingHorizontal: spacing.xs },
-  deleteBtnText: { fontSize: 12, color: colors.danger, fontWeight: '700' },
-  addForm: {
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: spacing.md,
-    marginTop: spacing.md,
-  },
-  addFormTitle: { fontSize: 13, fontWeight: '800', color: colors.ink, marginBottom: spacing.sm },
-  addFormRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
-  input: {
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    backgroundColor: colors.bg,
-    borderRadius: radius.md,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 13.5,
-    color: colors.ink,
-  },
-  timeInput: { width: 84, textAlign: 'center' },
-  addBtn: { backgroundColor: colors.ink, borderRadius: radius.md, paddingVertical: 12, alignItems: 'center' },
-  addBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalCard: { backgroundColor: colors.card, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, padding: spacing.lg },
-  modalTitle: { fontSize: 16, fontWeight: '800', color: colors.ink, marginBottom: 4 },
-  modalSubtitle: { fontSize: 12.5, color: colors.inkSoft, marginBottom: spacing.lg },
-  timeEditInput: {
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    backgroundColor: colors.bg,
-    borderRadius: radius.md,
-    paddingVertical: 14,
-    fontSize: 22,
-    fontWeight: '800',
-    textAlign: 'center',
-    color: colors.ink,
-    letterSpacing: 2,
-  },
-  modalBtnRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg },
-  modalBtn: { flex: 1, backgroundColor: colors.ink, borderRadius: radius.md, paddingVertical: 13, alignItems: 'center' },
-  modalBtnGhost: { backgroundColor: colors.bg, borderWidth: 1.5, borderColor: colors.line },
-  modalBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
-  modalBtnGhostText: { color: colors.inkSoft, fontSize: 14, fontWeight: '700' },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
+    back: { fontSize: 14, color: colors.inkSoft, fontWeight: '600' },
+    title: { fontSize: 17, fontWeight: '800', color: colors.ink },
+    manageToggle: { fontSize: 13, color: colors.coral, fontWeight: '700' },
+    empty: { textAlign: 'center', color: colors.inkFaint, fontSize: 12.5, marginTop: spacing.xl },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      backgroundColor: colors.card,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      marginBottom: spacing.sm,
+      padding: spacing.md,
+    },
+    rowMain: { flex: 1 },
+    checkbox: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    checkboxDone: { backgroundColor: colors.mintDeep, borderColor: colors.mintDeep },
+    checkboxMark: { color: '#fff', fontSize: 14, fontWeight: '800' },
+    rowLabel: { fontSize: 14, fontWeight: '700', color: colors.ink },
+    rowTime: { fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
+    deleteBtn: { paddingHorizontal: spacing.xs },
+    deleteBtnText: { fontSize: 12, color: colors.danger, fontWeight: '700' },
+    addForm: {
+      backgroundColor: colors.card,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: spacing.md,
+      marginTop: spacing.md,
+    },
+    addFormTitle: { fontSize: 13, fontWeight: '800', color: colors.ink, marginBottom: spacing.sm },
+    addFormRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm },
+    input: {
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      backgroundColor: colors.bg,
+      borderRadius: radius.md,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 13.5,
+      color: colors.ink,
+    },
+    timeInput: { width: 84, textAlign: 'center' },
+    addBtn: { backgroundColor: colors.ink, borderRadius: radius.md, paddingVertical: 12, alignItems: 'center' },
+    addBtnText: { color: colors.bg, fontSize: 13, fontWeight: '700' },
+    modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+    modalCard: { backgroundColor: colors.card, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, padding: spacing.lg },
+    modalTitle: { fontSize: 16, fontWeight: '800', color: colors.ink, marginBottom: 4 },
+    modalSubtitle: { fontSize: 12.5, color: colors.inkSoft, marginBottom: spacing.lg },
+    timeEditInput: {
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      backgroundColor: colors.bg,
+      borderRadius: radius.md,
+      paddingVertical: 14,
+      fontSize: 22,
+      fontWeight: '800',
+      textAlign: 'center',
+      color: colors.ink,
+      letterSpacing: 2,
+    },
+    modalBtnRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg },
+    modalBtn: { flex: 1, backgroundColor: colors.ink, borderRadius: radius.md, paddingVertical: 13, alignItems: 'center' },
+    modalBtnGhost: { backgroundColor: colors.bg, borderWidth: 1.5, borderColor: colors.line },
+    modalBtnText: { color: colors.bg, fontSize: 14, fontWeight: '700' },
+    modalBtnGhostText: { color: colors.inkSoft, fontSize: 14, fontWeight: '700' },
+  });
+}

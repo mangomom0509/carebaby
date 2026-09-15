@@ -6,12 +6,15 @@ import { useAuth } from '../lib/auth-context';
 import { listDoneVaccines, markVaccineDone, unmarkVaccineDone } from '../lib/api/vaccines';
 import { parseISO, toISO, todayStart } from '../lib/dates';
 import { VACCINE_DOSES, vaccineDueDate } from '../lib/vaccines';
-import { colors, radius, spacing } from '../lib/theme';
+import { useTheme } from '../lib/theme-context';
+import { radius, spacing, type ColorPalette } from '../lib/theme';
 import type { VaccineDose } from '../lib/types';
 
 export default function VaccinesScreen() {
   const { child } = useAuth();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [done, setDone] = useState<Record<string, VaccineDose>>({});
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -127,52 +130,54 @@ export default function VaccinesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.lg },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
-  back: { fontSize: 14, color: colors.inkSoft, fontWeight: '600', width: 40 },
-  title: { fontSize: 17, fontWeight: '800', color: colors.ink },
-  disclaimer: { backgroundColor: colors.butter, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg },
-  disclaimerText: { fontSize: 11.5, color: colors.butterDeep, lineHeight: 16 },
-  groupCard: {
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-  },
-  groupHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm, paddingHorizontal: spacing.xs },
-  groupTitle: { fontSize: 14, fontWeight: '800', color: colors.ink },
-  groupHint: { fontSize: 11, color: colors.mintDeep, fontWeight: '600' },
-  doseRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: 10,
-    paddingHorizontal: spacing.xs,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxDone: { backgroundColor: colors.mintDeep, borderColor: colors.mintDeep },
-  checkboxMark: { color: '#fff', fontSize: 13, fontWeight: '800' },
-  doseName: { fontSize: 13.5, fontWeight: '700', color: colors.ink },
-  doseAge: { fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
-  badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
-  badgeText: { fontSize: 11, fontWeight: '700' },
-  badgeDone: { backgroundColor: colors.mint },
-  badgeDoneText: { color: colors.mintDeep },
-  badgeDue: { backgroundColor: colors.peach },
-  badgeDueText: { color: colors.coral },
-  badgeUpcoming: { backgroundColor: colors.bg },
-  badgeUpcomingText: { color: colors.inkFaint },
-});
+function createStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.lg },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
+    back: { fontSize: 14, color: colors.inkSoft, fontWeight: '600', width: 40 },
+    title: { fontSize: 17, fontWeight: '800', color: colors.ink },
+    disclaimer: { backgroundColor: colors.butter, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg },
+    disclaimerText: { fontSize: 11.5, color: colors.butterDeep, lineHeight: 16 },
+    groupCard: {
+      backgroundColor: colors.card,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: spacing.md,
+      marginBottom: spacing.md,
+    },
+    groupHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm, paddingHorizontal: spacing.xs },
+    groupTitle: { fontSize: 14, fontWeight: '800', color: colors.ink },
+    groupHint: { fontSize: 11, color: colors.mintDeep, fontWeight: '600' },
+    doseRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      paddingVertical: 10,
+      paddingHorizontal: spacing.xs,
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+    },
+    checkbox: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    checkboxDone: { backgroundColor: colors.mintDeep, borderColor: colors.mintDeep },
+    checkboxMark: { color: '#fff', fontSize: 13, fontWeight: '800' },
+    doseName: { fontSize: 13.5, fontWeight: '700', color: colors.ink },
+    doseAge: { fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
+    badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
+    badgeText: { fontSize: 11, fontWeight: '700' },
+    badgeDone: { backgroundColor: colors.mint },
+    badgeDoneText: { color: colors.mintDeep },
+    badgeDue: { backgroundColor: colors.peach },
+    badgeDueText: { color: colors.coral },
+    badgeUpcoming: { backgroundColor: colors.bg },
+    badgeUpcomingText: { color: colors.inkFaint },
+  });
+}
