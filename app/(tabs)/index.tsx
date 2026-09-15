@@ -71,6 +71,22 @@ export default function HomeScreen() {
           <Text style={styles.linkBtnText}>오늘의 스케줄 보기 →</Text>
         </TouchableOpacity>
       </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardEyebrow}>육아일기</Text>
+        <Text style={styles.cardBody}>오늘 하루를 짧게 남겨보세요. 가족 모두가 함께 볼 수 있어요.</Text>
+        <TouchableOpacity style={styles.linkBtn} onPress={() => router.push('/diary')}>
+          <Text style={styles.linkBtnText}>일기 쓰기 →</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardEyebrow}>할 일 목록</Text>
+        <Text style={styles.cardBody}>육아 준비물, 병원 예약 같은 할 일을 가족과 같이 관리해보세요.</Text>
+        <TouchableOpacity style={styles.linkBtn} onPress={() => router.push('/todos')}>
+          <Text style={styles.linkBtnText}>할 일 목록 보기 →</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
