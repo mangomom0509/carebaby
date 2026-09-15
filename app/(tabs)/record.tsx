@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth-context';
 import { supabase } from '../../lib/supabase';
 import { addRecord, listRecordsForDate } from '../../lib/api/records';
@@ -29,6 +30,7 @@ function nowTime(): string {
 
 export default function RecordScreen() {
   const { child } = useAuth();
+  const insets = useSafeAreaInsets();
   const todayIso = useMemo(() => toISO(todayStart()), []);
   const [records, setRecords] = useState<RecordEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,7 +88,7 @@ export default function RecordScreen() {
   if (!child) return null;
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { paddingTop: insets.top + spacing.lg }]}>
       <Text style={styles.title}>기록</Text>
 
       <View style={styles.typeRow}>

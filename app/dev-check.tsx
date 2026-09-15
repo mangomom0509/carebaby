@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/auth-context';
 import { listDoneDevChecks, markDevCheckDone, unmarkDevCheckDone } from '../lib/api/dev-checks';
 import { ageMonths, parseISO, todayStart } from '../lib/dates';
@@ -10,6 +11,7 @@ import type { DevCheck } from '../lib/types';
 
 export default function DevCheckScreen() {
   const { child } = useAuth();
+  const insets = useSafeAreaInsets();
   const [done, setDone] = useState<Record<string, DevCheck>>({});
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -59,7 +61,7 @@ export default function DevCheckScreen() {
   if (!child || !birth) return null;
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { paddingTop: insets.top + spacing.lg }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={10}>
           <Text style={styles.back}>‹ 뒤로</Text>

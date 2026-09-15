@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth-context';
 import { deletePhotoForDate, getSignedUrls, listPhotosForMonth, uploadPhotoForDate } from '../../lib/api/photos';
 import { listRecordsForDate } from '../../lib/api/records';
@@ -43,6 +44,7 @@ function firstWeekday(year: number, month: number): number {
 
 export default function CalendarScreen() {
   const { child } = useAuth();
+  const insets = useSafeAreaInsets();
   const today = useMemo(() => todayStart(), []);
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1); // 1-12
@@ -97,7 +99,7 @@ export default function CalendarScreen() {
   const todayIso = toISO(today);
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { paddingTop: insets.top + spacing.lg }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => goMonth(-1)} hitSlop={10}>
           <Text style={styles.navArrow}>‹</Text>

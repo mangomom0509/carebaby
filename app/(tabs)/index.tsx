@@ -1,11 +1,13 @@
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth-context';
 import { ageMonths, dPlus, parseISO, todayStart } from '../../lib/dates';
 import { colors, radius, spacing } from '../../lib/theme';
 
 export default function HomeScreen() {
   const { child, family, membership } = useAuth();
+  const insets = useSafeAreaInsets();
 
   if (!child) return null;
 
@@ -15,7 +17,7 @@ export default function HomeScreen() {
   const days = dPlus(birth, today);
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.lg }]}>
       <View style={styles.header}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{child.name.slice(0, 1)}</Text>

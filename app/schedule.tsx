@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/auth-context';
 import { supabase } from '../lib/supabase';
 import {
@@ -33,6 +34,7 @@ function diffLabel(planned: string, actual: string): string {
 
 export default function ScheduleScreen() {
   const { child } = useAuth();
+  const insets = useSafeAreaInsets();
   const todayIso = useMemo(() => toISO(todayStart()), []);
   const [template, setTemplate] = useState<ScheduleTemplateItem[]>([]);
   const [logs, setLogs] = useState<Record<string, ScheduleLogEntry>>({});
@@ -41,6 +43,9 @@ export default function ScheduleScreen() {
   const [manageMode, setManageMode] = useState(false);
   const [newTime, setNewTime] = useState('');
   const [newLabel, setNewLabel] = useState('');
+  const [editingItem, setEditingItem] = useState<ScheduleTemplateItem | null>(null);
+  const [editTime, setEditTime] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const load = useCallback(async () => {
     if (!child) return;
@@ -86,6 +91,26 @@ export default function ScheduleScreen() {
     }
   };
 
+  const openEdit = (item: ScheduleTemplateItem) => {
+    if (manageMode) return;
+    const log = logs[item.id];
+    setEditingItem(item);
+    setEditTime(log ? log.start_time : nowTime());
+  };
+
+  const saveEdit = async () => {
+    if (!child || !editingItem) return;
+    if (!/^\d{2}:\d{2}$/.test(editTime)) return;
+    setSavingEdit(true);
+    try {
+      await logScheduleItem({ childId: child.id, itemId: editingItem.id, date: todayIso, startTime: editTime });
+      setEditingItem(null);
+      await load();
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   const removeItem = async (id: string) => {
     setBusyId(id);
     try {
@@ -114,7 +139,7 @@ export default function ScheduleScreen() {
   if (!child) return null;
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { paddingTop: insets.top + spacing.lg }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} hitSlop={10}>
           <Text style={styles.back}>‹ 뒤로</Text>
@@ -136,21 +161,19 @@ export default function ScheduleScreen() {
               const log = logs[item.id];
               return (
                 <View key={item.id} style={styles.row}>
-                  <TouchableOpacity
-                    style={styles.rowMain}
-                    onPress={() => !manageMode && toggle(item)}
-                    disabled={busyId === item.id}
-                  >
-                    <View style={[styles.checkbox, log && styles.checkboxDone]}>{log ? <Text style={styles.checkboxMark}>✓</Text> : null}</View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.rowLabel}>{item.label}</Text>
-                      <Text style={styles.rowTime}>
-                        예정 {item.time}
-                        {log ? ` · 실제 ${log.start_time} (${diffLabel(item.time, log.start_time)})` : ''}
-                      </Text>
+                  <TouchableOpacity onPress={() => toggle(item)} disabled={busyId === item.id} hitSlop={8}>
+                    <View style={[styles.checkbox, log && styles.checkboxDone]}>
+                      {log ? <Text style={styles.checkboxMark}>✓</Text> : null}
                     </View>
-                    {busyId === item.id && !manageMode ? <ActivityIndicator size="small" color={colors.ink} /> : null}
                   </TouchableOpacity>
+                  <TouchableOpacity style={styles.rowMain} onPress={() => (log ? openEdit(item) : toggle(item))} disabled={busyId === item.id}>
+                    <Text style={styles.rowLabel}>{item.label}</Text>
+                    <Text style={styles.rowTime}>
+                      예정 {item.time}
+                      {log ? ` · 실제 ${log.start_time} (${diffLabel(item.time, log.start_time)}) · 수정` : ' · 눌러서 기록'}
+                    </Text>
+                  </TouchableOpacity>
+                  {busyId === item.id ? <ActivityIndicator size="small" color={colors.ink} /> : null}
                   {manageMode ? (
                     <TouchableOpacity onPress={() => removeItem(item.id)} disabled={busyId === item.id} style={styles.deleteBtn}>
                       <Text style={styles.deleteBtnText}>삭제</Text>
@@ -189,12 +212,41 @@ export default function ScheduleScreen() {
           ) : null}
         </ScrollView>
       )}
+
+      {editingItem ? (
+        <Modal animationType="slide" transparent onRequestClose={() => setEditingItem(null)}>
+          <View style={styles.modalBackdrop}>
+            <View style={[styles.modalCard, { paddingBottom: insets.bottom + spacing.lg }]}>
+              <Text style={styles.modalTitle}>{editingItem.label} 시간 수정</Text>
+              <Text style={styles.modalSubtitle}>실제로 한 시간을 직접 입력해주세요.</Text>
+              <TextInput
+                style={styles.timeEditInput}
+                value={editTime}
+                onChangeText={setEditTime}
+                placeholder="HH:MM"
+                placeholderTextColor={colors.inkFaint}
+                keyboardType="numbers-and-punctuation"
+                maxLength={5}
+                autoFocus
+              />
+              <View style={styles.modalBtnRow}>
+                <TouchableOpacity style={[styles.modalBtn, styles.modalBtnGhost]} onPress={() => setEditingItem(null)}>
+                  <Text style={styles.modalBtnGhostText}>취소</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.modalBtn} onPress={saveEdit} disabled={savingEdit}>
+                  {savingEdit ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.modalBtnText}>저장</Text>}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.lg },
+  screen: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
   back: { fontSize: 14, color: colors.inkSoft, fontWeight: '600' },
   title: { fontSize: 17, fontWeight: '800', color: colors.ink },
@@ -203,14 +255,15 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: spacing.md,
     backgroundColor: colors.card,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.line,
     marginBottom: spacing.sm,
-    paddingRight: spacing.md,
+    padding: spacing.md,
   },
-  rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md },
+  rowMain: { flex: 1 },
   checkbox: {
     width: 26,
     height: 26,
@@ -224,7 +277,7 @@ const styles = StyleSheet.create({
   checkboxMark: { color: '#fff', fontSize: 14, fontWeight: '800' },
   rowLabel: { fontSize: 14, fontWeight: '700', color: colors.ink },
   rowTime: { fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
-  deleteBtn: { paddingHorizontal: spacing.sm },
+  deleteBtn: { paddingHorizontal: spacing.xs },
   deleteBtnText: { fontSize: 12, color: colors.danger, fontWeight: '700' },
   addForm: {
     backgroundColor: colors.card,
@@ -249,4 +302,25 @@ const styles = StyleSheet.create({
   timeInput: { width: 84, textAlign: 'center' },
   addBtn: { backgroundColor: colors.ink, borderRadius: radius.md, paddingVertical: 12, alignItems: 'center' },
   addBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalCard: { backgroundColor: colors.card, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, padding: spacing.lg },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: colors.ink, marginBottom: 4 },
+  modalSubtitle: { fontSize: 12.5, color: colors.inkSoft, marginBottom: spacing.lg },
+  timeEditInput: {
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    backgroundColor: colors.bg,
+    borderRadius: radius.md,
+    paddingVertical: 14,
+    fontSize: 22,
+    fontWeight: '800',
+    textAlign: 'center',
+    color: colors.ink,
+    letterSpacing: 2,
+  },
+  modalBtnRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg },
+  modalBtn: { flex: 1, backgroundColor: colors.ink, borderRadius: radius.md, paddingVertical: 13, alignItems: 'center' },
+  modalBtnGhost: { backgroundColor: colors.bg, borderWidth: 1.5, borderColor: colors.line },
+  modalBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  modalBtnGhostText: { color: colors.inkSoft, fontSize: 14, fontWeight: '700' },
 });

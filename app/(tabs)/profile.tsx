@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth-context';
 import { createInviteCode } from '../../lib/api/family';
 import { colors, radius, spacing } from '../../lib/theme';
 
 export default function ProfileScreen() {
   const { child, family, membership, signOut } = useAuth();
+  const insets = useSafeAreaInsets();
   const [code, setCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -31,7 +33,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.lg }]}>
       <Text style={styles.title}>내정보</Text>
 
       <View style={styles.card}>
