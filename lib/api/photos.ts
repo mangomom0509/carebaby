@@ -23,6 +23,12 @@ export async function listPhotosForMonth(childId: string, year: number, month: n
   return (data ?? []) as PhotoEntry[];
 }
 
+export async function getPhotoForDate(childId: string, date: string): Promise<PhotoEntry | null> {
+  const { data, error } = await supabase.from('photos').select('*').eq('child_id', childId).eq('photo_date', date).maybeSingle();
+  if (error) throw error;
+  return data as PhotoEntry | null;
+}
+
 export async function getSignedUrls(paths: string[]): Promise<Record<string, string>> {
   if (paths.length === 0) return {};
   const { data, error } = await supabase.storage.from(BUCKET).createSignedUrls(paths, SIGNED_URL_TTL_SECONDS);

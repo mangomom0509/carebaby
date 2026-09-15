@@ -1,12 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/auth-context';
 import { supabase } from '../lib/supabase';
 import { getDiaryEntry, saveDiaryEntry } from '../lib/api/diary';
+import { deletePhotoForDate, getPhotoForDate, getSignedUrls, uploadPhotoForDate } from '../lib/api/photos';
 import { toISO, todayStart } from '../lib/dates';
 import { colors, radius, spacing } from '../lib/theme';
+import type { PhotoEntry } from '../lib/types';
 
 const WEEKDAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -26,6 +40,9 @@ export default function DiaryScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<PhotoEntry | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
+  const [photoBusy, setPhotoBusy] = useState(false);
 
   const dateIso = useMemo(() => toISO(date), [date]);
   const isToday = dateIso === toISO(todayStart());
@@ -34,9 +51,16 @@ export default function DiaryScreen() {
     if (!child) return;
     setLoading(true);
     try {
-      const entry = await getDiaryEntry(child.id, dateIso);
+      const [entry, photoEntry] = await Promise.all([getDiaryEntry(child.id, dateIso), getPhotoForDate(child.id, dateIso)]);
       setText(entry?.text ?? '');
       setSavedAt(entry?.updated_at ?? null);
+      setPhoto(photoEntry);
+      if (photoEntry) {
+        const urls = await getSignedUrls([photoEntry.storage_path]);
+        setPhotoUrl(urls[photoEntry.storage_path]);
+      } else {
+        setPhotoUrl(undefined);
+      }
     } finally {
       setLoading(false);
     }
@@ -55,6 +79,7 @@ export default function DiaryScreen() {
         { event: '*', schema: 'public', table: 'diary_entries', filter: `child_id=eq.${child.id}` },
         () => load(),
       )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'photos', filter: `child_id=eq.${child.id}` }, () => load())
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
@@ -69,6 +94,45 @@ export default function DiaryScreen() {
       setSavedAt(entry.updated_at);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const pickAndUploadPhoto = async () => {
+    if (!child) return;
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('권한이 필요해요', '사진을 추가하려면 앨범 접근 권한을 허용해주세요.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+      base64: true,
+    });
+    if (result.canceled || !result.assets[0]?.base64) return;
+    setPhotoBusy(true);
+    try {
+      await uploadPhotoForDate(child.id, dateIso, result.assets[0].base64);
+      await load();
+    } catch (e) {
+      Alert.alert('업로드 실패', e instanceof Error ? e.message : '알 수 없는 오류가 발생했어요.');
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
+  const removePhoto = async () => {
+    if (!child) return;
+    setPhotoBusy(true);
+    try {
+      await deletePhotoForDate(child.id, dateIso);
+      await load();
+    } catch (e) {
+      Alert.alert('삭제 실패', e instanceof Error ? e.message : '알 수 없는 오류가 발생했어요.');
+    } finally {
+      setPhotoBusy(false);
     }
   };
 
@@ -104,6 +168,26 @@ export default function DiaryScreen() {
         <ActivityIndicator style={{ marginTop: spacing.xl }} color={colors.ink} />
       ) : (
         <>
+          {photoBusy ? (
+            <ActivityIndicator style={{ marginBottom: spacing.md }} color={colors.ink} />
+          ) : photoUrl ? (
+            <View style={styles.photoWrap}>
+              <Image source={{ uri: photoUrl }} style={styles.photo} />
+              <View style={styles.photoActions}>
+                <TouchableOpacity onPress={pickAndUploadPhoto}>
+                  <Text style={styles.photoActionText}>사진 바꾸기</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={removePhoto}>
+                  <Text style={[styles.photoActionText, styles.photoActionDanger]}>삭제</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.photoAdd} onPress={pickAndUploadPhoto}>
+              <Text style={styles.photoAddText}>+ 오늘의 사진 추가하기</Text>
+            </TouchableOpacity>
+          )}
+
           <TextInput
             style={styles.textArea}
             value={text}
@@ -149,4 +233,20 @@ const styles = StyleSheet.create({
   savedHint: { fontSize: 11.5, color: colors.inkFaint },
   saveBtn: { backgroundColor: colors.ink, borderRadius: radius.md, paddingHorizontal: 22, paddingVertical: 12 },
   saveBtnText: { color: '#fff', fontSize: 13.5, fontWeight: '700' },
+  photoAdd: {
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    borderStyle: 'dashed',
+    borderRadius: radius.lg,
+    paddingVertical: spacing.xl,
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    backgroundColor: colors.card,
+  },
+  photoAddText: { fontSize: 13, fontWeight: '700', color: colors.inkSoft },
+  photoWrap: { marginBottom: spacing.md },
+  photo: { width: '100%', aspectRatio: 1.6, borderRadius: radius.lg },
+  photoActions: { flexDirection: 'row', gap: spacing.lg, marginTop: spacing.sm, justifyContent: 'center' },
+  photoActionText: { fontSize: 12.5, fontWeight: '700', color: colors.coral },
+  photoActionDanger: { color: colors.danger },
 });
