@@ -81,9 +81,9 @@ export default function CalendarScreen() {
     return map;
   }, [checkupsWithDate]);
 
-  const checkupsThisMonth = useMemo(
-    () => checkupsWithDate.filter((e) => e.dueDate.getFullYear() === year && e.dueDate.getMonth() + 1 === month),
-    [checkupsWithDate, year, month],
+  const upcomingCheckups = useMemo(
+    () => checkupsWithDate.slice().sort((a, b) => (a.dueIso < b.dueIso ? -1 : 1)),
+    [checkupsWithDate],
   );
 
   const load = useCallback(async () => {
@@ -214,41 +214,40 @@ export default function CalendarScreen() {
             })}
           </View>
 
-          {checkupsThisMonth.length > 0 ? (
-            <View style={styles.checkupSection}>
-              <Text style={styles.checkupSectionTitle}>이번 달 검진</Text>
-              {checkupsThisMonth.map(({ checkup, dueDate }) => {
-                const isDone = Boolean(doneCheckups[checkup.id]);
-                const isDue = !isDone && today >= dueDate;
-                const statusLabel = isDone ? '완료' : isDue ? '접종할 때예요' : '예정';
-                return (
-                  <TouchableOpacity
-                    key={checkup.id}
-                    style={styles.checkupRow}
-                    onPress={() => toggleCheckup(checkup.id)}
-                    disabled={checkupBusyId === checkup.id}
-                  >
-                    <View style={[styles.checkupCheckbox, isDone && styles.checkupCheckboxDone]}>
-                      {isDone ? <Text style={styles.checkupCheckboxMark}>✓</Text> : null}
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.checkupLabel}>{checkup.label}</Text>
-                      <Text style={styles.checkupAge}>
-                        {checkup.ageNote} · {dueDate.getMonth() + 1}월 {dueDate.getDate()}일
-                      </Text>
-                    </View>
-                    {checkupBusyId === checkup.id ? (
-                      <ActivityIndicator size="small" color={colors.ink} />
-                    ) : (
-                      <Text style={[styles.checkupStatus, isDone && styles.checkupStatusDone, isDue && styles.checkupStatusDue]}>
-                        {statusLabel}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          ) : null}
+          <View style={styles.checkupSection}>
+            <Text style={styles.checkupSectionTitle}>검진 일정</Text>
+            <Text style={styles.checkupSectionHint}>날짜를 눌러 완료 체크하세요. 해당 월 달력 칸에는 파란 점으로도 표시돼요.</Text>
+            {upcomingCheckups.map(({ checkup, dueDate }) => {
+              const isDone = Boolean(doneCheckups[checkup.id]);
+              const isDue = !isDone && today >= dueDate;
+              const statusLabel = isDone ? '완료' : isDue ? '검진할 때예요' : '예정';
+              return (
+                <TouchableOpacity
+                  key={checkup.id}
+                  style={styles.checkupRow}
+                  onPress={() => toggleCheckup(checkup.id)}
+                  disabled={checkupBusyId === checkup.id}
+                >
+                  <View style={[styles.checkupCheckbox, isDone && styles.checkupCheckboxDone]}>
+                    {isDone ? <Text style={styles.checkupCheckboxMark}>✓</Text> : null}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.checkupLabel}>{checkup.label}</Text>
+                    <Text style={styles.checkupAge}>
+                      {checkup.ageNote} · {dueDate.getFullYear()}년 {dueDate.getMonth() + 1}월 {dueDate.getDate()}일
+                    </Text>
+                  </View>
+                  {checkupBusyId === checkup.id ? (
+                    <ActivityIndicator size="small" color={colors.ink} />
+                  ) : (
+                    <Text style={[styles.checkupStatus, isDone && styles.checkupStatusDone, isDue && styles.checkupStatusDue]}>
+                      {statusLabel}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </ScrollView>
       )}
 
@@ -420,7 +419,8 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     marginTop: spacing.lg,
   },
-  checkupSectionTitle: { fontSize: 13.5, fontWeight: '800', color: colors.ink, marginBottom: spacing.sm, paddingHorizontal: spacing.xs },
+  checkupSectionTitle: { fontSize: 13.5, fontWeight: '800', color: colors.ink, paddingHorizontal: spacing.xs },
+  checkupSectionHint: { fontSize: 11, color: colors.inkFaint, marginTop: 2, marginBottom: spacing.sm, paddingHorizontal: spacing.xs },
   checkupRow: {
     flexDirection: 'row',
     alignItems: 'center',
