@@ -54,9 +54,17 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
+      <View style={styles.card}>
+        <Text style={styles.cardEyebrow}>발달 체크</Text>
+        <Text style={styles.cardBody}>WHO 운동발달 기준과 월령별 체크리스트로 우리 아이 발달을 확인해보세요.</Text>
+        <TouchableOpacity style={styles.linkBtn} onPress={() => router.push('/dev-check')}>
+          <Text style={styles.linkBtnText}>발달 체크 보기 →</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.noteCard}>
         <Text style={styles.noteTitle}>다음에 만들 화면들</Text>
-        <Text style={styles.noteBody}>발달 체크(WHO 기준), 고정 스케줄표는 다음 작업에서 이 앱으로 옮겨질 예정이에요.</Text>
+        <Text style={styles.noteBody}>고정 스케줄표는 다음 작업에서 이 앱으로 옮겨질 예정이에요.</Text>
       </View>
     </ScrollView>
   );
