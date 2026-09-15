@@ -1,0 +1,176 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { router } from 'expo-router';
+import { useAuth } from '../lib/auth-context';
+import { listDoneVaccines, markVaccineDone, unmarkVaccineDone } from '../lib/api/vaccines';
+import { parseISO, toISO, todayStart } from '../lib/dates';
+import { VACCINE_DOSES, vaccineDueDate } from '../lib/vaccines';
+import { colors, radius, spacing } from '../lib/theme';
+import type { VaccineDose } from '../lib/types';
+
+export default function VaccinesScreen() {
+  const { child } = useAuth();
+  const [done, setDone] = useState<Record<string, VaccineDose>>({});
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!child) return;
+    const rows = await listDoneVaccines(child.id);
+    const map: Record<string, VaccineDose> = {};
+    for (const r of rows) map[r.vaccine_id] = r;
+    setDone(map);
+    setLoading(false);
+  }, [child]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const today = useMemo(() => todayStart(), []);
+  const todayIso = useMemo(() => toISO(today), [today]);
+  const birth = child ? parseISO(child.birth) : null;
+
+  const groups = useMemo(() => {
+    const map = new Map<string, typeof VACCINE_DOSES>();
+    for (const dose of VACCINE_DOSES) {
+      const list = map.get(dose.visitGroup) ?? [];
+      list.push(dose);
+      map.set(dose.visitGroup, list);
+    }
+    return Array.from(map.entries());
+  }, []);
+
+  const toggle = async (vaccineId: string) => {
+    if (!child) return;
+    setBusyId(vaccineId);
+    try {
+      if (done[vaccineId]) {
+        await unmarkVaccineDone(child.id, vaccineId);
+      } else {
+        await markVaccineDone(child.id, vaccineId, todayIso);
+      }
+      await load();
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  if (!child || !birth) return null;
+
+  return (
+    <View style={styles.screen}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={10}>
+          <Text style={styles.back}>‹ 뒤로</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>예방접종</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      <View style={styles.disclaimer}>
+        <Text style={styles.disclaimerText}>
+          질병관리청 표준예방접종일정표 기준 참고용 일정이에요. 정확한 시기·간격은 소아과 상담으로 확인해주세요.
+        </Text>
+      </View>
+
+      {loading ? (
+        <ActivityIndicator style={{ marginTop: spacing.xl }} color={colors.ink} />
+      ) : (
+        <ScrollView contentContainerStyle={{ paddingBottom: spacing.xl * 2 }}>
+          {groups.map(([visitGroup, doses]) => (
+            <View key={visitGroup} style={styles.groupCard}>
+              <View style={styles.groupHeader}>
+                <Text style={styles.groupTitle}>{visitGroup}</Text>
+                {doses.length > 1 ? <Text style={styles.groupHint}>같이 맞는 접종이에요</Text> : null}
+              </View>
+              {doses.map((dose) => {
+                const isDone = Boolean(done[dose.id]);
+                const dueDate = vaccineDueDate(birth, dose);
+                const isDue = !isDone && dueDate <= today;
+                const statusLabel = isDone ? '완료' : isDue ? '접종할 때예요' : '예정';
+                const statusStyle = isDone ? styles.badgeDone : isDue ? styles.badgeDue : styles.badgeUpcoming;
+                const statusTextStyle = isDone ? styles.badgeDoneText : isDue ? styles.badgeDueText : styles.badgeUpcomingText;
+                return (
+                  <TouchableOpacity
+                    key={dose.id}
+                    style={styles.doseRow}
+                    onPress={() => toggle(dose.id)}
+                    disabled={busyId === dose.id}
+                  >
+                    <View style={[styles.checkbox, isDone && styles.checkboxDone]}>
+                      {isDone ? <Text style={styles.checkboxMark}>✓</Text> : null}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.doseName}>
+                        {dose.vaccineName} · {dose.doseLabel}
+                      </Text>
+                      <Text style={styles.doseAge}>{dose.ageNote}</Text>
+                    </View>
+                    {busyId === dose.id ? (
+                      <ActivityIndicator size="small" color={colors.ink} />
+                    ) : (
+                      <View style={[styles.badge, statusStyle]}>
+                        <Text style={[styles.badgeText, statusTextStyle]}>{statusLabel}</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ))}
+        </ScrollView>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.lg },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
+  back: { fontSize: 14, color: colors.inkSoft, fontWeight: '600', width: 40 },
+  title: { fontSize: 17, fontWeight: '800', color: colors.ink },
+  disclaimer: { backgroundColor: colors.butter, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg },
+  disclaimerText: { fontSize: 11.5, color: colors.butterDeep, lineHeight: 16 },
+  groupCard: {
+    backgroundColor: colors.card,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  groupHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm, paddingHorizontal: spacing.xs },
+  groupTitle: { fontSize: 14, fontWeight: '800', color: colors.ink },
+  groupHint: { fontSize: 11, color: colors.mintDeep, fontWeight: '600' },
+  doseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: 10,
+    paddingHorizontal: spacing.xs,
+    borderTopWidth: 1,
+    borderTopColor: colors.line,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxDone: { backgroundColor: colors.mintDeep, borderColor: colors.mintDeep },
+  checkboxMark: { color: '#fff', fontSize: 13, fontWeight: '800' },
+  doseName: { fontSize: 13.5, fontWeight: '700', color: colors.ink },
+  doseAge: { fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
+  badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
+  badgeText: { fontSize: 11, fontWeight: '700' },
+  badgeDone: { backgroundColor: colors.mint },
+  badgeDoneText: { color: colors.mintDeep },
+  badgeDue: { backgroundColor: colors.peach },
+  badgeDueText: { color: colors.coral },
+  badgeUpcoming: { backgroundColor: colors.bg },
+  badgeUpcomingText: { color: colors.inkFaint },
+});

@@ -25,3 +25,8 @@ export function ageMonths(birth: Date, today: Date): number {
 export function dPlus(birth: Date, today: Date): number {
   return Math.floor((today.getTime() - birth.getTime()) / 86400000) + 1;
 }
+
+export function addMonths(d: Date, months: number): Date {
+  const result = new Date(d.getFullYear(), d.getMonth() + months, d.getDate());
+  return result;
+}

@@ -46,11 +46,17 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
+      <View style={styles.card}>
+        <Text style={styles.cardEyebrow}>예방접종</Text>
+        <Text style={styles.cardBody}>표준예방접종일정표 기준으로 언제 어떤 접종을 맞을 때인지 확인해보세요.</Text>
+        <TouchableOpacity style={styles.linkBtn} onPress={() => router.push('/vaccines')}>
+          <Text style={styles.linkBtnText}>예방접종 일정 보기 →</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.noteCard}>
         <Text style={styles.noteTitle}>다음에 만들 화면들</Text>
-        <Text style={styles.noteBody}>
-          예방접종 스케줄, 발달 체크(WHO 기준), 사진 캘린더, 고정 스케줄표는 다음 작업에서 이 앱으로 옮겨질 예정이에요.
-        </Text>
+        <Text style={styles.noteBody}>발달 체크(WHO 기준), 고정 스케줄표는 다음 작업에서 이 앱으로 옮겨질 예정이에요.</Text>
       </View>
     </ScrollView>
   );
