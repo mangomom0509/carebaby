@@ -62,9 +62,12 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.noteCard}>
-        <Text style={styles.noteTitle}>다음에 만들 화면들</Text>
-        <Text style={styles.noteBody}>고정 스케줄표는 다음 작업에서 이 앱으로 옮겨질 예정이에요.</Text>
+      <View style={styles.card}>
+        <Text style={styles.cardEyebrow}>스케줄표</Text>
+        <Text style={styles.cardBody}>정해진 하루 일과를 보고, 실제로 한 시간을 기록해보세요.</Text>
+        <TouchableOpacity style={styles.linkBtn} onPress={() => router.push('/schedule')}>
+          <Text style={styles.linkBtnText}>오늘의 스케줄 보기 →</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
