@@ -13,11 +13,13 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth-context';
+import { listDoneCheckups, markCheckupDone, unmarkCheckupDone } from '../../lib/api/checkups';
 import { deletePhotoForDate, getSignedUrls, listPhotosForMonth, uploadPhotoForDate } from '../../lib/api/photos';
 import { listRecordsForDate } from '../../lib/api/records';
-import { pad, toISO, todayStart } from '../../lib/dates';
+import { checkupDueDate, CHECKUPS } from '../../lib/checkups';
+import { pad, parseISO, toISO, todayStart } from '../../lib/dates';
 import { colors, radius, spacing } from '../../lib/theme';
-import type { PhotoEntry, RecordEntry } from '../../lib/types';
+import type { CheckupDone, PhotoEntry, RecordEntry } from '../../lib/types';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -53,6 +55,8 @@ export default function CalendarScreen() {
   const [loading, setLoading] = useState(true);
   const [collageMode, setCollageMode] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [doneCheckups, setDoneCheckups] = useState<Record<string, CheckupDone>>({});
+  const [checkupBusyId, setCheckupBusyId] = useState<string | null>(null);
 
   const photoByDate = useMemo(() => {
     const map: Record<string, PhotoEntry> = {};
@@ -60,14 +64,39 @@ export default function CalendarScreen() {
     return map;
   }, [photos]);
 
+  const birth = child ? parseISO(child.birth) : null;
+
+  const checkupsWithDate = useMemo(() => {
+    if (!birth) return [];
+    return CHECKUPS.map((c) => ({ checkup: c, dueDate: checkupDueDate(birth, c), dueIso: toISO(checkupDueDate(birth, c)) }));
+  }, [birth]);
+
+  const checkupsByDate = useMemo(() => {
+    const map: Record<string, (typeof checkupsWithDate)[number][]> = {};
+    for (const entry of checkupsWithDate) {
+      const list = map[entry.dueIso] ?? [];
+      list.push(entry);
+      map[entry.dueIso] = list;
+    }
+    return map;
+  }, [checkupsWithDate]);
+
+  const checkupsThisMonth = useMemo(
+    () => checkupsWithDate.filter((e) => e.dueDate.getFullYear() === year && e.dueDate.getMonth() + 1 === month),
+    [checkupsWithDate, year, month],
+  );
+
   const load = useCallback(async () => {
     if (!child) return;
     setLoading(true);
     try {
-      const rows = await listPhotosForMonth(child.id, year, month);
+      const [rows, doneRows] = await Promise.all([listPhotosForMonth(child.id, year, month), listDoneCheckups(child.id)]);
       setPhotos(rows);
       const signed = await getSignedUrls(rows.map((r) => r.storage_path));
       setUrls(signed);
+      const doneMap: Record<string, CheckupDone> = {};
+      for (const d of doneRows) doneMap[d.checkup_id] = d;
+      setDoneCheckups(doneMap);
     } finally {
       setLoading(false);
     }
@@ -76,6 +105,21 @@ export default function CalendarScreen() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const toggleCheckup = async (checkupId: string) => {
+    if (!child) return;
+    setCheckupBusyId(checkupId);
+    try {
+      if (doneCheckups[checkupId]) {
+        await unmarkCheckupDone(child.id, checkupId);
+      } else {
+        await markCheckupDone(child.id, checkupId, toISO(today));
+      }
+      await load();
+    } finally {
+      setCheckupBusyId(null);
+    }
+  };
 
   const goMonth = (delta: number) => {
     let m = month + delta;
@@ -139,7 +183,7 @@ export default function CalendarScreen() {
           )}
         </ScrollView>
       ) : (
-        <View>
+        <ScrollView contentContainerStyle={{ paddingBottom: spacing.xl * 2 }}>
           <View style={styles.weekdayRow}>
             {WEEKDAYS.map((w) => (
               <Text key={w} style={styles.weekdayText}>
@@ -153,19 +197,59 @@ export default function CalendarScreen() {
               const iso = `${year}-${pad(month)}-${pad(d)}`;
               const photo = photoByDate[iso];
               const isToday = iso === todayIso;
+              const hasCheckup = Boolean(checkupsByDate[iso]);
               return (
                 <TouchableOpacity key={iso} style={styles.dayCell} onPress={() => setSelectedDate(iso)}>
-                  {photo && urls[photo.storage_path] ? (
-                    <Image source={{ uri: urls[photo.storage_path] }} style={styles.dayThumb} />
-                  ) : (
-                    <View style={[styles.dayThumb, styles.dayThumbEmpty]} />
-                  )}
+                  <View style={{ width: '100%', flex: 1 }}>
+                    {photo && urls[photo.storage_path] ? (
+                      <Image source={{ uri: urls[photo.storage_path] }} style={styles.dayThumb} />
+                    ) : (
+                      <View style={[styles.dayThumb, styles.dayThumbEmpty]} />
+                    )}
+                    {hasCheckup ? <View style={styles.checkupDot} /> : null}
+                  </View>
                   <Text style={[styles.dayNum, isToday && styles.dayNumToday]}>{d}</Text>
                 </TouchableOpacity>
               );
             })}
           </View>
-        </View>
+
+          {checkupsThisMonth.length > 0 ? (
+            <View style={styles.checkupSection}>
+              <Text style={styles.checkupSectionTitle}>이번 달 검진</Text>
+              {checkupsThisMonth.map(({ checkup, dueDate }) => {
+                const isDone = Boolean(doneCheckups[checkup.id]);
+                const isDue = !isDone && today >= dueDate;
+                const statusLabel = isDone ? '완료' : isDue ? '접종할 때예요' : '예정';
+                return (
+                  <TouchableOpacity
+                    key={checkup.id}
+                    style={styles.checkupRow}
+                    onPress={() => toggleCheckup(checkup.id)}
+                    disabled={checkupBusyId === checkup.id}
+                  >
+                    <View style={[styles.checkupCheckbox, isDone && styles.checkupCheckboxDone]}>
+                      {isDone ? <Text style={styles.checkupCheckboxMark}>✓</Text> : null}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.checkupLabel}>{checkup.label}</Text>
+                      <Text style={styles.checkupAge}>
+                        {checkup.ageNote} · {dueDate.getMonth() + 1}월 {dueDate.getDate()}일
+                      </Text>
+                    </View>
+                    {checkupBusyId === checkup.id ? (
+                      <ActivityIndicator size="small" color={colors.ink} />
+                    ) : (
+                      <Text style={[styles.checkupStatus, isDone && styles.checkupStatusDone, isDue && styles.checkupStatusDue]}>
+                        {statusLabel}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : null}
+        </ScrollView>
       )}
 
       {selectedDate ? (
@@ -315,8 +399,53 @@ const styles = StyleSheet.create({
   dayCell: { width: '14.28%', aspectRatio: 0.8, alignItems: 'center', padding: 3 },
   dayThumb: { width: '100%', flex: 1, borderRadius: radius.sm },
   dayThumbEmpty: { backgroundColor: colors.line },
+  checkupDot: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.skyDeep,
+    borderWidth: 1,
+    borderColor: colors.card,
+  },
   dayNum: { fontSize: 11, color: colors.inkSoft, marginTop: 2 },
   dayNumToday: { color: colors.coral, fontWeight: '800' },
+  checkupSection: {
+    backgroundColor: colors.card,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    padding: spacing.md,
+    marginTop: spacing.lg,
+  },
+  checkupSectionTitle: { fontSize: 13.5, fontWeight: '800', color: colors.ink, marginBottom: spacing.sm, paddingHorizontal: spacing.xs },
+  checkupRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: 10,
+    paddingHorizontal: spacing.xs,
+    borderTopWidth: 1,
+    borderTopColor: colors.line,
+  },
+  checkupCheckbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: colors.line,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkupCheckboxDone: { backgroundColor: colors.mintDeep, borderColor: colors.mintDeep },
+  checkupCheckboxMark: { color: '#fff', fontSize: 13, fontWeight: '800' },
+  checkupLabel: { fontSize: 13.5, fontWeight: '700', color: colors.ink },
+  checkupAge: { fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
+  checkupStatus: { fontSize: 11.5, fontWeight: '700', color: colors.inkFaint },
+  checkupStatusDone: { color: colors.mintDeep },
+  checkupStatusDue: { color: colors.coral },
   empty: { textAlign: 'center', color: colors.inkFaint, fontSize: 12.5, marginTop: spacing.xl },
   collageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, paddingBottom: spacing.xl },
   collageCell: { width: '31%', alignItems: 'center' },
