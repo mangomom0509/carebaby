@@ -6,6 +6,7 @@ import { useAuth } from '../lib/auth-context';
 import { listDoneDevChecks, markDevCheckDone, unmarkDevCheckDone } from '../lib/api/dev-checks';
 import { ageMonths, parseISO, todayStart } from '../lib/dates';
 import { DEV_MILESTONES, DOMAIN_COLOR } from '../lib/dev-milestones';
+import { Icon } from '../lib/icons';
 import { useTheme } from '../lib/theme-context';
 import { radius, spacing, type ColorPalette } from '../lib/theme';
 import type { DevCheck } from '../lib/types';
@@ -66,11 +67,11 @@ export default function DevCheckScreen() {
   return (
     <View style={[styles.screen, { paddingTop: insets.top + spacing.lg }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={10}>
-          <Text style={styles.back}>‹ 뒤로</Text>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={10} style={styles.backBtn}>
+          <Icon name="chevL" size={18} color={colors.ink} />
         </TouchableOpacity>
         <Text style={styles.title}>발달 체크</Text>
-        <View style={{ width: 40 }} />
+        <View style={{ width: 28 }} />
       </View>
 
       <View style={styles.disclaimer}>
@@ -101,7 +102,7 @@ export default function DevCheckScreen() {
                   return (
                     <TouchableOpacity key={m.id} style={styles.doseRow} onPress={() => toggle(m.id)} disabled={busyId === m.id}>
                       <View style={[styles.checkbox, isDone && styles.checkboxDone]}>
-                        {isDone ? <Text style={styles.checkboxMark}>✓</Text> : null}
+                        {isDone ? <Icon name="check" size={11} color="#fff" /> : null}
                       </View>
                       <View style={{ flex: 1 }}>
                         <View style={styles.domainRow}>
@@ -134,7 +135,7 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.lg },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
-    back: { fontSize: 14, color: colors.inkSoft, fontWeight: '600', width: 40 },
+    backBtn: { width: 28 },
     title: { fontSize: 17, fontWeight: '800', color: colors.ink },
     disclaimer: { backgroundColor: colors.butter, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg },
     disclaimerText: { fontSize: 11.5, color: colors.butterDeep, lineHeight: 16 },
@@ -168,7 +169,6 @@ function createStyles(colors: ColorPalette) {
       justifyContent: 'center',
     },
     checkboxDone: { backgroundColor: colors.mintDeep, borderColor: colors.mintDeep },
-    checkboxMark: { color: '#fff', fontSize: 13, fontWeight: '800' },
     domainRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
     domainDot: { width: 7, height: 7, borderRadius: 4 },
     domainLabel: { fontSize: 10.5, fontWeight: '700', color: colors.inkSoft },
@@ -179,7 +179,7 @@ function createStyles(colors: ColorPalette) {
     badgeDone: { backgroundColor: colors.mint },
     badgeDoneText: { color: colors.mintDeep },
     badgeDue: { backgroundColor: colors.peach },
-    badgeDueText: { color: colors.accent },
+    badgeDueText: { color: colors.accentInk },
     badgeUpcoming: { backgroundColor: colors.bg },
     badgeUpcomingText: { color: colors.inkFaint },
   });

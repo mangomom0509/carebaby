@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/auth-context';
 import { listDoneVaccines, markVaccineDone, unmarkVaccineDone } from '../lib/api/vaccines';
 import { parseISO, toISO, todayStart } from '../lib/dates';
+import { Icon } from '../lib/icons';
 import { VACCINE_DOSES, vaccineDueDate } from '../lib/vaccines';
 import { useTheme } from '../lib/theme-context';
 import { radius, spacing, type ColorPalette } from '../lib/theme';
@@ -66,11 +67,11 @@ export default function VaccinesScreen() {
   return (
     <View style={[styles.screen, { paddingTop: insets.top + spacing.lg }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={10}>
-          <Text style={styles.back}>‹ 뒤로</Text>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={10} style={styles.backBtn}>
+          <Icon name="chevL" size={18} color={colors.ink} />
         </TouchableOpacity>
         <Text style={styles.title}>예방접종</Text>
-        <View style={{ width: 40 }} />
+        <View style={{ width: 28 }} />
       </View>
 
       <View style={styles.disclaimer}>
@@ -103,8 +104,8 @@ export default function VaccinesScreen() {
                     onPress={() => toggle(dose.id)}
                     disabled={busyId === dose.id}
                   >
-                    <View style={[styles.checkbox, isDone && styles.checkboxDone]}>
-                      {isDone ? <Text style={styles.checkboxMark}>✓</Text> : null}
+                    <View style={[styles.iconDot, isDone && styles.iconDotDone]}>
+                      <Icon name={isDone ? 'check' : 'shot'} size={14} color={isDone ? colors.mintDeep : colors.skyDeep} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.doseName}>
@@ -134,7 +135,7 @@ function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.lg },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
-    back: { fontSize: 14, color: colors.inkSoft, fontWeight: '600', width: 40 },
+    backBtn: { width: 28 },
     title: { fontSize: 17, fontWeight: '800', color: colors.ink },
     disclaimer: { backgroundColor: colors.butter, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg },
     disclaimerText: { fontSize: 11.5, color: colors.butterDeep, lineHeight: 16 },
@@ -158,17 +159,8 @@ function createStyles(colors: ColorPalette) {
       borderTopWidth: 1,
       borderTopColor: colors.line,
     },
-    checkbox: {
-      width: 24,
-      height: 24,
-      borderRadius: 12,
-      borderWidth: 1.5,
-      borderColor: colors.line,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    checkboxDone: { backgroundColor: colors.mintDeep, borderColor: colors.mintDeep },
-    checkboxMark: { color: '#fff', fontSize: 13, fontWeight: '800' },
+    iconDot: { width: 26, height: 26, borderRadius: 9, backgroundColor: colors.sky, alignItems: 'center', justifyContent: 'center' },
+    iconDotDone: { backgroundColor: colors.mint },
     doseName: { fontSize: 13.5, fontWeight: '700', color: colors.ink },
     doseAge: { fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
     badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
@@ -176,7 +168,7 @@ function createStyles(colors: ColorPalette) {
     badgeDone: { backgroundColor: colors.mint },
     badgeDoneText: { color: colors.mintDeep },
     badgeDue: { backgroundColor: colors.peach },
-    badgeDueText: { color: colors.accent },
+    badgeDueText: { color: colors.accentInk },
     badgeUpcoming: { backgroundColor: colors.bg },
     badgeUpcomingText: { color: colors.inkFaint },
   });
