@@ -53,3 +53,18 @@ export function vaccineDueDate(birth: Date, dose: VaccineDoseRef): Date {
   const d = new Date(birth.getFullYear(), birth.getMonth() + dose.minAgeMonths, birth.getDate());
   return d;
 }
+
+export interface NextVisit {
+  visitGroup: string;
+  dueDate: Date;
+  doses: VaccineDoseRef[];
+}
+
+export function nextPendingVisit(birth: Date, doneIds: Set<string>): NextVisit | null {
+  const pending = VACCINE_DOSES.filter((d) => !doneIds.has(d.id));
+  if (pending.length === 0) return null;
+  const sorted = pending.slice().sort((a, b) => a.minAgeMonths - b.minAgeMonths);
+  const first = sorted[0];
+  const doses = sorted.filter((d) => d.visitGroup === first.visitGroup);
+  return { visitGroup: first.visitGroup, dueDate: vaccineDueDate(birth, first), doses };
+}
