@@ -29,6 +29,25 @@ Expo Go 앱(iOS/Android)으로 QR코드를 스캔하면 바로 확인할 수 있
 - 프로필 탭에서 언제든 새 초대 코드를 다시 만들 수 있어요.
 - 데이터 접근은 Supabase RLS(Row Level Security)로 강제돼요 — 가족 그룹에 속한 사람만 그 아이의 데이터를 읽고 쓸 수 있고, 다른 가족의 데이터는 절대 보이지 않아요.
 
+## 웹 버전
+
+같은 코드, 같은 Supabase 백엔드로 브라우저에서 쓰는 웹 버전도 만들 수 있어요 (모바일 앱과 데이터가 그대로 공유돼요 — 앱에서 가입한 계정으로 웹에서도 로그인하면 같은 아이 정보가 보여요).
+
+```bash
+npm run build:web
+```
+
+`dist/` 폴더에 정적 사이트가 만들어져요. 무료로 올릴 수 있는 곳:
+
+- **Vercel** (추천): [vercel.com](https://vercel.com)에서 이 저장소를 가져와 배포하면 `vercel.json`(이미 포함됨)이 자동으로 인식돼요. Framework Preset은 "Other"로 두고, Build Command `npm run build:web`, Output Directory `dist`만 확인하면 돼요.
+- **Netlify**: [netlify.com](https://netlify.com)에서 저장소 연결하면 `netlify.toml`(이미 포함됨)을 자동으로 읽어요.
+
+두 곳 다 프로젝트의 **환경 변수**(`EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`)를 대시보드에 똑같이 등록해줘야 해요 (`.env`는 git에 안 올라가니까요).
+
+**웹에서 다른 점 (알아두면 좋아요):**
+- 사진 선택 시 네이티브 앱처럼 정사각형으로 자르는 화면은 안 뜨고, 브라우저 파일 선택창이 바로 열려요. 업로드는 정상 동작해요.
+- 나머지 기능(가족 초대, 기록, 캘린더, 예방접종, 발달체크, 스케줄표, 일기, 할일, 다크모드)은 모바일과 동일하게 동작해요.
+
 ## 앱스토어 배포까지 남은 것 (사장님이 직접 하셔야 하는 부분)
 
 1. Apple Developer 계정($99/년), Google Play Console 계정($25 1회 결제)
