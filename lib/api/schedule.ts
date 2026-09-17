@@ -50,11 +50,20 @@ export async function logScheduleItem(input: {
   itemId: string;
   date: string;
   startTime: string;
+  amount?: number | null;
+  level?: string | null;
 }): Promise<ScheduleLogEntry> {
   const { data, error } = await supabase
     .from('schedule_log')
     .upsert(
-      { child_id: input.childId, item_id: input.itemId, log_date: input.date, start_time: input.startTime },
+      {
+        child_id: input.childId,
+        item_id: input.itemId,
+        log_date: input.date,
+        start_time: input.startTime,
+        amount: input.amount ?? null,
+        level: input.level ?? null,
+      },
       { onConflict: 'item_id,log_date' },
     )
     .select('*')

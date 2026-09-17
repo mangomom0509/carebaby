@@ -41,3 +41,8 @@ export async function createChild(input: {
 
   return child as Child;
 }
+
+export async function setRegularPattern(childId: string, regularPattern: boolean): Promise<void> {
+  const { error } = await supabase.from('children').update({ regular_pattern: regularPattern }).eq('id', childId);
+  if (error) throw error;
+}
