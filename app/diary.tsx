@@ -251,7 +251,7 @@ function createStyles(colors: ColorPalette) {
     photoWrap: { marginBottom: spacing.md },
     photo: { width: '100%', aspectRatio: 1.6, borderRadius: radius.lg },
     photoActions: { flexDirection: 'row', gap: spacing.lg, marginTop: spacing.sm, justifyContent: 'center' },
-    photoActionText: { fontSize: 12.5, fontWeight: '700', color: colors.coral },
-    photoActionDanger: { color: colors.danger },
+    photoActionText: { fontSize: 12.5, fontWeight: '700', color: colors.accent },
+    photoActionDanger: { color: colors.inkFaint },
   });
 }

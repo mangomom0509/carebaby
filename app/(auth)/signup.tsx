@@ -105,7 +105,7 @@ function createStyles(colors: ColorPalette) {
       fontSize: 15,
       color: colors.ink,
     },
-    error: { color: colors.danger, fontSize: 12.5, marginBottom: spacing.md, textAlign: 'center' },
+    error: { color: colors.feverInk, fontSize: 12.5, marginBottom: spacing.md, textAlign: 'center' },
     button: {
       backgroundColor: colors.ink,
       borderRadius: radius.md,
@@ -114,6 +114,6 @@ function createStyles(colors: ColorPalette) {
       marginTop: spacing.sm,
     },
     buttonText: { color: colors.bg, fontSize: 15, fontWeight: '700' },
-    link: { textAlign: 'center', color: colors.coral, fontSize: 13, marginTop: spacing.lg, fontWeight: '600' },
+    link: { textAlign: 'center', color: colors.accent, fontSize: 13, marginTop: spacing.lg, fontWeight: '600' },
   });
 }

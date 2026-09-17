@@ -254,7 +254,7 @@ function createStyles(colors: ColorPalette) {
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
     back: { fontSize: 14, color: colors.inkSoft, fontWeight: '600' },
     title: { fontSize: 17, fontWeight: '800', color: colors.ink },
-    manageToggle: { fontSize: 13, color: colors.coral, fontWeight: '700' },
+    manageToggle: { fontSize: 13, color: colors.accent, fontWeight: '700' },
     empty: { textAlign: 'center', color: colors.inkFaint, fontSize: 12.5, marginTop: spacing.xl },
     row: {
       flexDirection: 'row',
@@ -282,7 +282,7 @@ function createStyles(colors: ColorPalette) {
     rowLabel: { fontSize: 14, fontWeight: '700', color: colors.ink },
     rowTime: { fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
     deleteBtn: { paddingHorizontal: spacing.xs },
-    deleteBtnText: { fontSize: 12, color: colors.danger, fontWeight: '700' },
+    deleteBtnText: { fontSize: 12, color: colors.inkFaint, fontWeight: '700' },
     addForm: {
       backgroundColor: colors.card,
       borderRadius: radius.lg,

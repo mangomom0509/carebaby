@@ -176,7 +176,7 @@ function createStyles(colors: ColorPalette) {
     badgeDone: { backgroundColor: colors.mint },
     badgeDoneText: { color: colors.mintDeep },
     badgeDue: { backgroundColor: colors.peach },
-    badgeDueText: { color: colors.coral },
+    badgeDueText: { color: colors.accent },
     badgeUpcoming: { backgroundColor: colors.bg },
     badgeUpcomingText: { color: colors.inkFaint },
   });

@@ -181,6 +181,6 @@ function createStyles(colors: ColorPalette) {
     checkboxMark: { color: '#fff', fontSize: 13, fontWeight: '800' },
     label: { fontSize: 14, fontWeight: '600', color: colors.ink, flex: 1 },
     labelDone: { color: colors.inkFaint, textDecorationLine: 'line-through' },
-    deleteText: { fontSize: 12, color: colors.danger, fontWeight: '700' },
+    deleteText: { fontSize: 12, color: colors.inkFaint, fontWeight: '700' },
   });
 }

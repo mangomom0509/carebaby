@@ -110,7 +110,7 @@ function createStyles(colors: ColorPalette) {
     chipActive: { borderColor: colors.peachDeep, backgroundColor: colors.peach },
     chipText: { fontSize: 14, fontWeight: '600', color: colors.inkSoft },
     chipTextActive: { color: colors.ink },
-    error: { color: colors.danger, fontSize: 12.5, marginBottom: spacing.md, textAlign: 'center' },
+    error: { color: colors.feverInk, fontSize: 12.5, marginBottom: spacing.md, textAlign: 'center' },
     button: { backgroundColor: colors.ink, borderRadius: radius.md, paddingVertical: 15, alignItems: 'center', marginTop: spacing.sm },
     buttonDisabled: { opacity: 0.4 },
     buttonText: { color: colors.bg, fontSize: 15, fontWeight: '700' },

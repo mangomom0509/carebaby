@@ -108,7 +108,7 @@ function createStyles(colors: ColorPalette) {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    avatarText: { fontSize: 20, fontWeight: '800', color: colors.coral },
+    avatarText: { fontSize: 20, fontWeight: '800', color: colors.accent },
     name: { fontSize: 17, fontWeight: '800', color: colors.ink },
     age: { fontSize: 12.5, color: colors.inkSoft, marginTop: 2 },
     card: {
@@ -122,8 +122,8 @@ function createStyles(colors: ColorPalette) {
     cardEyebrow: { fontSize: 11.5, fontWeight: '700', color: colors.inkSoft, marginBottom: 6 },
     cardBody: { fontSize: 13.5, color: colors.ink, lineHeight: 19 },
     inviteBtn: { marginTop: spacing.md },
-    inviteBtnText: { color: colors.coral, fontSize: 12.5, fontWeight: '700' },
+    inviteBtnText: { color: colors.accent, fontSize: 12.5, fontWeight: '700' },
     linkBtn: { marginTop: spacing.md },
-    linkBtnText: { color: colors.coral, fontSize: 12.5, fontWeight: '700' },
+    linkBtnText: { color: colors.accent, fontSize: 12.5, fontWeight: '700' },
   });
 }

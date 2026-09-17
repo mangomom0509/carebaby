@@ -184,10 +184,10 @@ function createStyles(colors: ColorPalette) {
       marginBottom: spacing.lg,
     },
     codeInput: { textAlign: 'center', fontSize: 24, fontWeight: '800', letterSpacing: 6 },
-    error: { color: colors.danger, fontSize: 12.5, marginBottom: spacing.md, textAlign: 'center' },
+    error: { color: colors.feverInk, fontSize: 12.5, marginBottom: spacing.md, textAlign: 'center' },
     button: { backgroundColor: colors.ink, borderRadius: radius.md, paddingVertical: 15, alignItems: 'center' },
     buttonText: { color: colors.bg, fontSize: 15, fontWeight: '700' },
-    link: { textAlign: 'center', color: colors.coral, fontSize: 13, fontWeight: '600' },
+    link: { textAlign: 'center', color: colors.accent, fontSize: 13, fontWeight: '600' },
     signOut: { textAlign: 'center', color: colors.inkFaint, fontSize: 12.5 },
     codeBox: {
       backgroundColor: colors.peach,
