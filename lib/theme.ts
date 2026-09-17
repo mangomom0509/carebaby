@@ -9,6 +9,7 @@ export const lightColors = {
   inkFaint: '#C6C6CC',
   line: '#EDEDF0',
   peach: '#FBECE5',
+  peachSoft: '#F0C9A8', // light peach, visible as a small marker (e.g. calendar checkup dot)
   peachDeep: '#E3A583',
   accent: '#1C1C1E', // --coral: the near-black primary accent (buttons, active states)
   accentOn: '#FFFFFF', // --coral-on: text/icon color on top of accent
@@ -33,6 +34,7 @@ export const darkColors: typeof lightColors = {
   inkFaint: '#525258',
   line: '#2C2C30',
   peach: '#2E2621',
+  peachSoft: '#A56B45',
   peachDeep: '#C98A66',
   accent: '#F2F2F3',
   accentOn: '#18181B',

@@ -105,7 +105,7 @@ export default function VaccinesScreen() {
                     disabled={busyId === dose.id}
                   >
                     <View style={[styles.iconDot, isDone && styles.iconDotDone]}>
-                      <Icon name={isDone ? 'check' : 'shot'} size={14} color={isDone ? colors.mintDeep : colors.skyDeep} />
+                      <Icon name={isDone ? 'check' : 'shot'} size={14} color={colors.accentInk} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.doseName}>
@@ -137,8 +137,8 @@ function createStyles(colors: ColorPalette) {
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
     backBtn: { width: 28 },
     title: { fontSize: 17, fontWeight: '800', color: colors.ink },
-    disclaimer: { backgroundColor: colors.butter, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg },
-    disclaimerText: { fontSize: 11.5, color: colors.butterDeep, lineHeight: 16 },
+    disclaimer: { backgroundColor: colors.peach, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg },
+    disclaimerText: { fontSize: 11.5, color: colors.accentInk, lineHeight: 16 },
     groupCard: {
       backgroundColor: colors.card,
       borderRadius: radius.lg,
@@ -149,7 +149,7 @@ function createStyles(colors: ColorPalette) {
     },
     groupHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm, paddingHorizontal: spacing.xs },
     groupTitle: { fontSize: 14, fontWeight: '800', color: colors.ink },
-    groupHint: { fontSize: 11, color: colors.mintDeep, fontWeight: '600' },
+    groupHint: { fontSize: 11, color: colors.accentInk, fontWeight: '600' },
     doseRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -159,15 +159,15 @@ function createStyles(colors: ColorPalette) {
       borderTopWidth: 1,
       borderTopColor: colors.line,
     },
-    iconDot: { width: 26, height: 26, borderRadius: 9, backgroundColor: colors.sky, alignItems: 'center', justifyContent: 'center' },
-    iconDotDone: { backgroundColor: colors.mint },
+    iconDot: { width: 26, height: 26, borderRadius: 9, backgroundColor: colors.peachSoft, alignItems: 'center', justifyContent: 'center' },
+    iconDotDone: { backgroundColor: colors.peach },
     doseName: { fontSize: 13.5, fontWeight: '700', color: colors.ink },
     doseAge: { fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
     badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
     badgeText: { fontSize: 11, fontWeight: '700' },
-    badgeDone: { backgroundColor: colors.mint },
-    badgeDoneText: { color: colors.mintDeep },
-    badgeDue: { backgroundColor: colors.peach },
+    badgeDone: { backgroundColor: colors.peach },
+    badgeDoneText: { color: colors.accentInk },
+    badgeDue: { backgroundColor: colors.peachSoft },
     badgeDueText: { color: colors.accentInk },
     badgeUpcoming: { backgroundColor: colors.bg },
     badgeUpcomingText: { color: colors.inkFaint },

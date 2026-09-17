@@ -36,15 +36,15 @@ interface TypeMeta {
 
 function createTypeMeta(colors: ColorPalette): Record<RecordType, TypeMeta> {
   return {
-    feed: { label: '수유', icon: 'feed', color: colors.skyDeep },
-    water: { label: '물', icon: 'water', color: colors.skyDeep },
-    meal: { label: '이유식', icon: 'meal', color: colors.butterDeep },
-    kidmeal: { label: '유아식', icon: 'meal', color: colors.butterDeep },
-    snack: { label: '간식', icon: 'snack', color: colors.butterDeep },
+    feed: { label: '수유', icon: 'feed', color: colors.accentInk },
+    water: { label: '물', icon: 'water', color: colors.accentInk },
+    meal: { label: '이유식', icon: 'meal', color: colors.accentInk },
+    kidmeal: { label: '유아식', icon: 'meal', color: colors.accentInk },
+    snack: { label: '간식', icon: 'snack', color: colors.accentInk },
     routine: { label: '일과', icon: 'star', color: colors.accentInk },
-    sleep: { label: '수면', icon: 'sleep', color: colors.mintDeep },
+    sleep: { label: '수면', icon: 'sleep', color: colors.accentInk },
     diaper: { label: '배변', icon: 'diaper', color: colors.accentInk },
-    shot: { label: '접종', icon: 'shot', color: colors.skyDeep },
+    shot: { label: '접종', icon: 'shot', color: colors.accentInk },
     temp: { label: '체온', icon: 'temp', color: colors.accentInk },
   };
 }
@@ -341,7 +341,7 @@ export default function RecordScreen() {
                   </Text>
                   {log ? (
                     <View style={styles.schedActual}>
-                      <Icon name="check" size={12} color={colors.mintDeep} />
+                      <Icon name="check" size={12} color={colors.accentInk} />
                       <Text style={styles.schedActualText}>
                         {log.start_time}
                         {log.amount != null ? ` · ${log.amount}${unit ?? ''}` : log.level ? ` · ${log.level}` : ''}
@@ -468,8 +468,8 @@ export default function RecordScreen() {
         <View style={styles.guideRow}>
           <View style={styles.guideCard}>
             <View style={styles.guideTitleRow}>
-              <View style={[styles.guideIconDot, { backgroundColor: colors.mint }]}>
-                <Icon name="sleep" size={13} color={colors.mintDeep} />
+              <View style={[styles.guideIconDot, { backgroundColor: colors.peach }]}>
+                <Icon name="sleep" size={13} color={colors.accentInk} />
               </View>
               <Text style={styles.guideTitle}>수면</Text>
             </View>
@@ -477,8 +477,8 @@ export default function RecordScreen() {
           </View>
           <View style={styles.guideCard}>
             <View style={styles.guideTitleRow}>
-              <View style={[styles.guideIconDot, { backgroundColor: colors.butter }]}>
-                <Icon name="meal" size={13} color={colors.butterDeep} />
+              <View style={[styles.guideIconDot, { backgroundColor: colors.peach }]}>
+                <Icon name="meal" size={13} color={colors.accentInk} />
               </View>
               <Text style={styles.guideTitle}>이유식</Text>
             </View>
@@ -604,7 +604,7 @@ function createStyles(colors: ColorPalette) {
     schedLabel: { flex: 1, fontSize: 13.5, fontWeight: '600', color: colors.ink },
     schedLabelDone: { color: colors.inkFaint },
     schedActual: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    schedActualText: { color: colors.mintDeep, fontSize: 12, fontWeight: '700' },
+    schedActualText: { color: colors.accentInk, fontSize: 12, fontWeight: '700' },
     diBtn: { borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.card, paddingHorizontal: 11, paddingVertical: 7, borderRadius: 9 },
     diBtnText: { fontSize: 11.5, fontWeight: '700', color: colors.ink },
     tlItem: { flexDirection: 'row', gap: 12, paddingVertical: 11 },

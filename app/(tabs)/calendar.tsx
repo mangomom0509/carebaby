@@ -210,8 +210,8 @@ export default function CalendarScreen() {
                     )}
                     {hasVax || hasChk ? (
                       <View style={styles.calDots}>
-                        {hasVax ? <View style={[styles.calDot, { backgroundColor: colors.skyDeep }]} /> : null}
-                        {hasChk ? <View style={[styles.calDot, { backgroundColor: colors.mintDeep }]} /> : null}
+                        {hasVax ? <View style={[styles.calDot, { backgroundColor: colors.peachDeep }]} /> : null}
+                        {hasChk ? <View style={[styles.calDot, { backgroundColor: colors.peachSoft }]} /> : null}
                       </View>
                     ) : null}
                   </View>
@@ -223,11 +223,11 @@ export default function CalendarScreen() {
 
           <View style={styles.legend}>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: colors.skyDeep }]} />
+              <View style={[styles.legendDot, { backgroundColor: colors.peachDeep }]} />
               <Text style={styles.legendText}>예방접종</Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: colors.mintDeep }]} />
+              <View style={[styles.legendDot, { backgroundColor: colors.peachSoft }]} />
               <Text style={styles.legendText}>영유아 검진</Text>
             </View>
             <TouchableOpacity style={styles.legendGalleryBtn} onPress={() => setCollageMode(true)}>
@@ -423,8 +423,8 @@ function DayDetailModal({
                   return (
                     <View key={dose.id} style={styles.dayItem}>
                       <View style={styles.diLeft}>
-                        <View style={[styles.iconDot, { backgroundColor: colors.sky }]}>
-                          <Icon name="shot" size={14} color={colors.skyDeep} />
+                        <View style={[styles.iconDot, { backgroundColor: colors.peach }]}>
+                          <Icon name="shot" size={14} color={colors.peachDeep} />
                         </View>
                         <View style={{ flex: 1 }}>
                           <Text style={styles.diName}>
@@ -448,8 +448,8 @@ function DayDetailModal({
                   return (
                     <View key={checkup.id} style={styles.dayItem}>
                       <View style={styles.diLeft}>
-                        <View style={[styles.iconDot, { backgroundColor: colors.mint }]}>
-                          <Icon name="check" size={13} color={colors.mintDeep} />
+                        <View style={[styles.iconDot, { backgroundColor: colors.peach }]}>
+                          <Icon name="check" size={13} color={colors.accentInk} />
                         </View>
                         <View style={{ flex: 1 }}>
                           <Text style={styles.diName}>{checkup.label}</Text>
@@ -459,7 +459,7 @@ function DayDetailModal({
                       {busyId === checkup.id ? (
                         <ActivityIndicator size="small" color={colors.ink} />
                       ) : done ? (
-                        <Icon name="check" size={16} color={colors.mintDeep} />
+                        <Icon name="check" size={16} color={colors.accentInk} />
                       ) : (
                         <TouchableOpacity style={styles.diBtn} onPress={() => toggleChk(checkup.id)}>
                           <Text style={styles.diBtnText}>완료 표시</Text>

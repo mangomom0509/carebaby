@@ -337,7 +337,7 @@ export default function HomeScreen() {
                     const done = doneDevIds.has(m.id);
                     return (
                       <View key={m.id} style={styles.devItem}>
-                        <View style={[styles.devBox, done && styles.devBoxDone]}>{done ? <Icon name="check" size={11} color={colors.card} /> : null}</View>
+                        <View style={[styles.devBox, done && styles.devBoxDone]}>{done ? <Icon name="check" size={11} color={colors.accentOn} /> : null}</View>
                         <Text style={[styles.devLbl, done && styles.devLblDone]}>{m.label}</Text>
                       </View>
                     );
@@ -540,8 +540,8 @@ function createStyles(colors: ColorPalette) {
     tlSub: { fontSize: 10.5, color: colors.inkSoft, marginTop: 6, textAlign: 'center' },
     todayHint: { fontSize: 11, color: colors.inkFaint, marginTop: 11 },
     pill: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12 },
-    pillGood: { backgroundColor: colors.mint },
-    pillGoodText: { color: colors.mintDeep },
+    pillGood: { backgroundColor: colors.peach },
+    pillGoodText: { color: colors.accentInk },
     pillAlert: { backgroundColor: colors.peach },
     pillAlertText: { color: colors.accentInk },
     pillDanger: { backgroundColor: colors.feverBg },
@@ -553,12 +553,12 @@ function createStyles(colors: ColorPalette) {
     pillMeta: { marginLeft: 'auto', fontSize: 11, color: colors.inkSoft },
     devHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 9 },
     devTitle: { fontSize: 14.5, fontWeight: '700', color: colors.ink },
-    devFrac: { fontWeight: '800', fontSize: 14, color: colors.mintDeep },
+    devFrac: { fontWeight: '800', fontSize: 14, color: colors.accentInk },
     devTrack: { height: 6, backgroundColor: colors.line, borderRadius: 99, overflow: 'hidden', marginBottom: 12 },
-    devFill: { height: '100%', backgroundColor: colors.mintDeep, borderRadius: 99 },
+    devFill: { height: '100%', backgroundColor: colors.peachDeep, borderRadius: 99 },
     devItem: { flexDirection: 'row', alignItems: 'center', gap: 9 },
     devBox: { width: 18, height: 18, borderRadius: 6, borderWidth: 1.5, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
-    devBoxDone: { backgroundColor: colors.mintDeep, borderColor: colors.mintDeep },
+    devBoxDone: { backgroundColor: colors.accent, borderColor: colors.accent },
     devLbl: { fontSize: 13, color: colors.ink, flex: 1 },
     devLblDone: { color: colors.inkFaint, textDecorationLine: 'line-through' },
     emptyNote: { color: colors.inkFaint, fontSize: 12.5, paddingVertical: 6 },
@@ -580,14 +580,14 @@ function createStyles(colors: ColorPalette) {
       fontSize: 13,
     },
     todoAddBtn: { width: 36, borderRadius: 10, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
-    noteCardH: { backgroundColor: colors.butter, borderRadius: 14, padding: 13 },
+    noteCardH: { backgroundColor: colors.peach, borderRadius: 14, padding: 13 },
     noteTextH: { fontSize: 13, lineHeight: 19, color: colors.ink, marginBottom: 9 },
     noteMetaH: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
     noteMetaText: { fontSize: 11, color: colors.inkSoft },
     noteAckBtn: { backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.line, borderRadius: 99, paddingHorizontal: 12, paddingVertical: 5 },
-    noteAckBtnActive: { backgroundColor: colors.butterDeep, borderColor: colors.butterDeep },
+    noteAckBtnActive: { backgroundColor: colors.accent, borderColor: colors.accent },
     noteAckText: { fontSize: 11.5, fontWeight: '700', color: colors.ink },
-    noteAckTextActive: { color: '#fff' },
+    noteAckTextActive: { color: colors.accentOn },
     noteEmptyText: { fontSize: 12.5, color: colors.inkSoft, marginBottom: 12 },
     pillBtn: { borderWidth: 1.5, borderColor: colors.accent, paddingHorizontal: 13, paddingVertical: 9, borderRadius: 11 },
     pillBtnText: { color: colors.accent, fontSize: 12.5, fontWeight: '700' },

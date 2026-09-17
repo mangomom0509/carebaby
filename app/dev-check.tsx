@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/auth-context';
 import { listDoneDevChecks, markDevCheckDone, unmarkDevCheckDone } from '../lib/api/dev-checks';
 import { ageMonths, parseISO, todayStart } from '../lib/dates';
-import { DEV_MILESTONES, DOMAIN_COLOR } from '../lib/dev-milestones';
+import { DEV_MILESTONES, domainColor } from '../lib/dev-milestones';
 import { Icon } from '../lib/icons';
 import { useTheme } from '../lib/theme-context';
 import { radius, spacing, type ColorPalette } from '../lib/theme';
@@ -102,11 +102,11 @@ export default function DevCheckScreen() {
                   return (
                     <TouchableOpacity key={m.id} style={styles.doseRow} onPress={() => toggle(m.id)} disabled={busyId === m.id}>
                       <View style={[styles.checkbox, isDone && styles.checkboxDone]}>
-                        {isDone ? <Icon name="check" size={11} color="#fff" /> : null}
+                        {isDone ? <Icon name="check" size={11} color={colors.accentOn} /> : null}
                       </View>
                       <View style={{ flex: 1 }}>
                         <View style={styles.domainRow}>
-                          <View style={[styles.domainDot, { backgroundColor: DOMAIN_COLOR[m.domain] }]} />
+                          <View style={[styles.domainDot, { backgroundColor: domainColor(m.domain, colors) }]} />
                           <Text style={styles.domainLabel}>{m.domain}</Text>
                         </View>
                         <Text style={styles.doseName}>{m.label}</Text>
@@ -137,8 +137,8 @@ function createStyles(colors: ColorPalette) {
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
     backBtn: { width: 28 },
     title: { fontSize: 17, fontWeight: '800', color: colors.ink },
-    disclaimer: { backgroundColor: colors.butter, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg },
-    disclaimerText: { fontSize: 11.5, color: colors.butterDeep, lineHeight: 16 },
+    disclaimer: { backgroundColor: colors.peach, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg },
+    disclaimerText: { fontSize: 11.5, color: colors.accentInk, lineHeight: 16 },
     groupCard: {
       backgroundColor: colors.card,
       borderRadius: radius.lg,
@@ -168,7 +168,7 @@ function createStyles(colors: ColorPalette) {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    checkboxDone: { backgroundColor: colors.mintDeep, borderColor: colors.mintDeep },
+    checkboxDone: { backgroundColor: colors.accent, borderColor: colors.accent },
     domainRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
     domainDot: { width: 7, height: 7, borderRadius: 4 },
     domainLabel: { fontSize: 10.5, fontWeight: '700', color: colors.inkSoft },
@@ -176,9 +176,9 @@ function createStyles(colors: ColorPalette) {
     doseAge: { fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
     badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
     badgeText: { fontSize: 11, fontWeight: '700' },
-    badgeDone: { backgroundColor: colors.mint },
-    badgeDoneText: { color: colors.mintDeep },
-    badgeDue: { backgroundColor: colors.peach },
+    badgeDone: { backgroundColor: colors.peach },
+    badgeDoneText: { color: colors.accentInk },
+    badgeDue: { backgroundColor: colors.peachSoft },
     badgeDueText: { color: colors.accentInk },
     badgeUpcoming: { backgroundColor: colors.bg },
     badgeUpcomingText: { color: colors.inkFaint },

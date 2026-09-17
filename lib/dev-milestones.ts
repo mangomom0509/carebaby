@@ -83,10 +83,16 @@ export const DEV_MILESTONES: DevMilestoneRef[] = [
   { id: 'cog-36', domain: '인지', label: '간단한 퍼즐(3~4조각)을 맞춰요', ageMonths: 36, windowNote: '36개월 무렵', ageGroup: '36개월' },
 ];
 
-export const DOMAIN_COLOR: Record<DevDomain, string> = {
-  대근육: '#3D7DD9',
-  소근육: '#3AA07E',
-  언어: '#C98A1E',
-  사회정서: '#FF6B4A',
-  인지: '#8B5CF6',
-};
+// Domain dots use one warm neutral family (accent -> peach) instead of a
+// different hue per domain, so the palette stays unified across the app;
+// the label text next to each dot still carries the actual distinction.
+export function domainColor(domain: DevDomain, colors: { accent: string; accentInk: string; peachDeep: string; peachSoft: string; peach: string }): string {
+  const order: Record<DevDomain, string> = {
+    대근육: colors.accent,
+    소근육: colors.accentInk,
+    언어: colors.peachDeep,
+    사회정서: colors.peachSoft,
+    인지: colors.peach,
+  };
+  return order[domain];
+}
