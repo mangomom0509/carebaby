@@ -133,6 +133,16 @@ export default function ProfileScreen() {
         </View>
       </View>
 
+      <TouchableOpacity style={styles.card} onPress={() => router.push('/monthly-report')}>
+        <View style={styles.rowItem}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.rowTitle}>이달의 성장보고서</Text>
+            <Text style={styles.rowDesc}>성장·수유·수면·발달체크·사진을 모아 공유 카드로 만들어드려요.</Text>
+          </View>
+          <Icon name="chevR" size={16} color={colors.inkSoft} />
+        </View>
+      </TouchableOpacity>
+
       <View style={styles.card}>
         <Text style={styles.eyebrow}>화면 테마</Text>
         <View style={styles.themeRow}>

@@ -42,3 +42,17 @@ export async function deleteRecord(id: string): Promise<void> {
   const { error } = await supabase.from('records').delete().eq('id', id);
   if (error) throw error;
 }
+
+export async function listRecordsForMonth(childId: string, year: number, month: number): Promise<RecordEntry[]> {
+  const start = `${year}-${String(month).padStart(2, '0')}-01`;
+  const end = new Date(year, month, 1);
+  const endIso = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-01`;
+  const { data, error } = await supabase
+    .from('records')
+    .select('*')
+    .eq('child_id', childId)
+    .gte('record_date', start)
+    .lt('record_date', endIso);
+  if (error) throw error;
+  return (data ?? []) as RecordEntry[];
+}

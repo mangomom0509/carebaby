@@ -76,3 +76,17 @@ export async function unlogScheduleItem(itemId: string, date: string): Promise<v
   const { error } = await supabase.from('schedule_log').delete().eq('item_id', itemId).eq('log_date', date);
   if (error) throw error;
 }
+
+export async function listScheduleLogForMonth(childId: string, year: number, month: number): Promise<ScheduleLogEntry[]> {
+  const start = `${year}-${String(month).padStart(2, '0')}-01`;
+  const end = new Date(year, month, 1);
+  const endIso = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-01`;
+  const { data, error } = await supabase
+    .from('schedule_log')
+    .select('*')
+    .eq('child_id', childId)
+    .gte('log_date', start)
+    .lt('log_date', endIso);
+  if (error) throw error;
+  return (data ?? []) as ScheduleLogEntry[];
+}
