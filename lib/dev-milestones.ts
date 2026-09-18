@@ -2,7 +2,7 @@
 // Development Study windows; the rest follow commonly used general pediatric
 // checkpoints (CDC-style "몇 개월엔 이런 걸 해요" lists). This is a rough guide,
 // not a diagnostic tool — always confirm with a pediatrician / 영유아 건강검진.
-export type DevDomain = '대근육' | '소근육' | '언어' | '사회정서' | '인지';
+export type DevDomain = '대근육' | '소근육' | '언어' | '사회정서' | '인지' | '자조';
 
 export interface DevMilestoneRef {
   id: string;
@@ -45,42 +45,49 @@ export const DEV_MILESTONES: DevMilestoneRef[] = [
   { id: 'lang-9', domain: '언어', label: '이름을 부르면 반응해요', ageMonths: 9, windowNote: '9개월 무렵', ageGroup: '9개월' },
   { id: 'social-9', domain: '사회정서', label: '까꿍놀이를 좋아해요', ageMonths: 9, windowNote: '9개월 무렵', ageGroup: '9개월' },
   { id: 'cog-9', domain: '인지', label: '장난감을 숨기면 찾으려고 해요', ageMonths: 9, windowNote: '9개월 무렵', ageGroup: '9개월' },
+  { id: 'self-9', domain: '자조', label: '숟가락이나 컵에 관심을 보이고 만지려고 해요', ageMonths: 9, windowNote: '9개월 무렵', ageGroup: '9개월' },
 
   // 12개월
   { id: 'fine-12', domain: '소근육', label: '혼자 컵을 들고 마시려고 해요', ageMonths: 12, windowNote: '12개월 무렵', ageGroup: '12개월' },
   { id: 'lang-12', domain: '언어', label: '엄마·아빠 외에 한두 단어를 말해요', ageMonths: 12, windowNote: '12개월 무렵', ageGroup: '12개월' },
   { id: 'social-12', domain: '사회정서', label: '손을 흔들어 인사해요', ageMonths: 12, windowNote: '12개월 무렵', ageGroup: '12개월' },
   { id: 'cog-12', domain: '인지', label: '간단한 지시를 따라요 ("이리 줘")', ageMonths: 12, windowNote: '12개월 무렵', ageGroup: '12개월' },
+  { id: 'self-12', domain: '자조', label: '먹여줄 때 입을 벌리며 협조해요', ageMonths: 12, windowNote: '12개월 무렵', ageGroup: '12개월' },
 
   // 15개월
   { id: 'fine-15', domain: '소근육', label: '블록 2개를 쌓아요', ageMonths: 15, windowNote: '15개월 무렵', ageGroup: '15개월' },
   { id: 'lang-15', domain: '언어', label: '3~5개 단어를 말해요', ageMonths: 15, windowNote: '15개월 무렵', ageGroup: '15개월' },
   { id: 'social-15', domain: '사회정서', label: '친숙한 어른의 행동을 따라 해요', ageMonths: 15, windowNote: '15개월 무렵', ageGroup: '15개월' },
   { id: 'cog-15', domain: '인지', label: '그림책의 그림을 가리켜요', ageMonths: 15, windowNote: '15개월 무렵', ageGroup: '15개월' },
+  { id: 'self-15', domain: '자조', label: '숟가락으로 스스로 떠먹으려고 해요 (많이 흘려도 괜찮아요)', ageMonths: 15, windowNote: '15개월 무렵', ageGroup: '15개월' },
 
   // 18개월
   { id: 'fine-18', domain: '소근육', label: '숟가락을 사용해 먹어요', ageMonths: 18, windowNote: '18개월 무렵', ageGroup: '18개월' },
   { id: 'lang-18', domain: '언어', label: '10개 이상의 단어를 말해요', ageMonths: 18, windowNote: '18개월 무렵', ageGroup: '18개월' },
   { id: 'social-18', domain: '사회정서', label: '다른 아이에게 관심을 보여요', ageMonths: 18, windowNote: '18개월 무렵', ageGroup: '18개월' },
   { id: 'cog-18', domain: '인지', label: '몸의 부위(코, 눈 등)를 가리켜요', ageMonths: 18, windowNote: '18개월 무렵', ageGroup: '18개월' },
+  { id: 'self-18', domain: '자조', label: '옷을 벗을 때 팔다리를 움직여 도와줘요', ageMonths: 18, windowNote: '18개월 무렵', ageGroup: '18개월' },
 
   // 24개월
   { id: 'fine-24', domain: '소근육', label: '블록 4개 이상을 쌓아요', ageMonths: 24, windowNote: '24개월 무렵', ageGroup: '24개월' },
   { id: 'lang-24', domain: '언어', label: '두 단어를 이어서 말해요 ("엄마 물")', ageMonths: 24, windowNote: '24개월 무렵', ageGroup: '24개월' },
   { id: 'social-24', domain: '사회정서', label: '간단한 역할놀이를 해요', ageMonths: 24, windowNote: '24개월 무렵', ageGroup: '24개월' },
   { id: 'cog-24', domain: '인지', label: '같은 모양끼리 짝지어요', ageMonths: 24, windowNote: '24개월 무렵', ageGroup: '24개월' },
+  { id: 'self-24', domain: '자조', label: '손 씻을 때 손을 비비며 도와줘요', ageMonths: 24, windowNote: '24개월 무렵', ageGroup: '24개월' },
 
   // 30개월
   { id: 'fine-30', domain: '소근육', label: '간단한 옷을 스스로 벗어요', ageMonths: 30, windowNote: '30개월 무렵', ageGroup: '30개월' },
   { id: 'lang-30', domain: '언어', label: '3단어 이상 문장을 말해요', ageMonths: 30, windowNote: '30개월 무렵', ageGroup: '30개월' },
   { id: 'social-30', domain: '사회정서', label: '다른 아이와 짧게 함께 놀아요', ageMonths: 30, windowNote: '30개월 무렵', ageGroup: '30개월' },
   { id: 'cog-30', domain: '인지', label: '색깔 이름을 한두 개 알아요', ageMonths: 30, windowNote: '30개월 무렵', ageGroup: '30개월' },
+  { id: 'self-30', domain: '자조', label: '이 닦기에 협조하고 칫솔을 스스로 쥐어요', ageMonths: 30, windowNote: '30개월 무렵', ageGroup: '30개월' },
 
   // 36개월
   { id: 'fine-36', domain: '소근육', label: '가위로 종이를 자르는 흉내를 내요', ageMonths: 36, windowNote: '36개월 무렵', ageGroup: '36개월' },
   { id: 'lang-36', domain: '언어', label: '낯선 사람도 절반 이상 알아들을 수 있게 말해요', ageMonths: 36, windowNote: '36개월 무렵', ageGroup: '36개월' },
   { id: 'social-36', domain: '사회정서', label: '차례를 기다려요', ageMonths: 36, windowNote: '36개월 무렵', ageGroup: '36개월' },
   { id: 'cog-36', domain: '인지', label: '간단한 퍼즐(3~4조각)을 맞춰요', ageMonths: 36, windowNote: '36개월 무렵', ageGroup: '36개월' },
+  { id: 'self-36', domain: '자조', label: '혼자 옷을 입으려고 시도해요 (지퍼·단추는 아직 어려워요)', ageMonths: 36, windowNote: '36개월 무렵', ageGroup: '36개월' },
 ];
 
 // Domain dots use one warm neutral family (accent -> peach) instead of a
@@ -93,6 +100,7 @@ export function domainColor(domain: DevDomain, colors: { accent: string; accentI
     언어: colors.peachDeep,
     사회정서: colors.peachSoft,
     인지: colors.peach,
+    자조: colors.peachDeep,
   };
   return order[domain];
 }
