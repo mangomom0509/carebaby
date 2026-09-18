@@ -151,6 +151,19 @@ create table photos (
   primary key (child_id, photo_date)
 );
 
+-- Growth measurements over time (height/weight/head circumference). Percentile
+-- comparison against WHO Child Growth Standards happens client-side.
+create table growth_records (
+  id uuid primary key default gen_random_uuid(),
+  child_id uuid not null references children(id) on delete cascade,
+  measured_date date not null,
+  height_cm numeric(5,1),
+  weight_kg numeric(5,2),
+  head_circumference_cm numeric(5,1),
+  created_at timestamptz not null default now(),
+  unique (child_id, measured_date)
+);
+
 -- ---------------------------------------------------------------------------
 -- Row Level Security
 -- ---------------------------------------------------------------------------
@@ -169,6 +182,7 @@ alter table records enable row level security;
 alter table diary_entries enable row level security;
 alter table daily_notes enable row level security;
 alter table photos enable row level security;
+alter table growth_records enable row level security;
 
 create or replace function is_family_member(p_family_id uuid)
 returns boolean
@@ -257,6 +271,10 @@ create policy "daily_notes: family members full access" on daily_notes
   with check (is_family_member(family_id_for_child(child_id)));
 
 create policy "photos: family members full access" on photos
+  for all using (is_family_member(family_id_for_child(child_id)))
+  with check (is_family_member(family_id_for_child(child_id)));
+
+create policy "growth_records: family members full access" on growth_records
   for all using (is_family_member(family_id_for_child(child_id)))
   with check (is_family_member(family_id_for_child(child_id)));
 

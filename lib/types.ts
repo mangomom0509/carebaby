@@ -125,3 +125,13 @@ export interface PhotoEntry {
   storage_path: string;
   created_at: string;
 }
+
+export interface GrowthRecord {
+  id: string;
+  child_id: string;
+  measured_date: string;
+  height_cm: number | null;
+  weight_kg: number | null;
+  head_circumference_cm: number | null;
+  created_at: string;
+}

@@ -7,17 +7,19 @@ import { supabase } from '../../lib/supabase';
 import { listDoneVaccines } from '../../lib/api/vaccines';
 import { listScheduleLogForDate, listScheduleTemplate } from '../../lib/api/schedule';
 import { listRecordsForDate } from '../../lib/api/records';
+import { listGrowthRecords } from '../../lib/api/growth';
 import { listTodos, addTodo, deleteTodo, setTodoDone } from '../../lib/api/todos';
 import { getDailyNote, saveDailyNote, setDailyNoteAck } from '../../lib/api/daily-notes';
-import { ageMonths, dPlus, parseISO, toISO, todayStart } from '../../lib/dates';
+import { ageDays, ageMonths, dPlus, parseISO, toISO, todayStart } from '../../lib/dates';
 import { computeCurrentStatus, nextByKind, toMin, type CurrentStatus } from '../../lib/schedule-status';
 import { nextPendingVisit } from '../../lib/vaccines';
+import { weightPercentile } from '../../lib/growth-standards';
 import { DEV_MILESTONES } from '../../lib/dev-milestones';
 import { listDoneDevChecks } from '../../lib/api/dev-checks';
 import { Icon } from '../../lib/icons';
 import { useTheme } from '../../lib/theme-context';
 import { radius, spacing, type ColorPalette } from '../../lib/theme';
-import type { RecordEntry, ScheduleLogEntry, ScheduleTemplateItem, Todo, DailyNote, VaccineDose, DevCheck } from '../../lib/types';
+import type { RecordEntry, ScheduleLogEntry, ScheduleTemplateItem, Todo, DailyNote, VaccineDose, DevCheck, GrowthRecord } from '../../lib/types';
 
 function topicParticle(name: string): string {
   const last = name[name.length - 1] || '';
@@ -69,6 +71,7 @@ export default function HomeScreen() {
   const [doneVaccineIds, setDoneVaccineIds] = useState<Set<string>>(new Set());
   const [doneDevIds, setDoneDevIds] = useState<Set<string>>(new Set());
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [growthRecords, setGrowthRecords] = useState<GrowthRecord[]>([]);
   const [note, setNote] = useState<DailyNote | null>(null);
   const [bellOpen, setBellOpen] = useState(false);
   const [noteModalOpen, setNoteModalOpen] = useState(false);
@@ -81,7 +84,7 @@ export default function HomeScreen() {
     if (!child || !family) return;
     setLoading(true);
     try {
-      const [tpl, log, recs, doneVax, doneDev, todoRows, noteRow] = await Promise.all([
+      const [tpl, log, recs, doneVax, doneDev, todoRows, noteRow, growthRows] = await Promise.all([
         listScheduleTemplate(child.id),
         listScheduleLogForDate(child.id, todayIso),
         listRecordsForDate(child.id, todayIso),
@@ -89,6 +92,7 @@ export default function HomeScreen() {
         listDoneDevChecks(child.id),
         listTodos(family.id),
         getDailyNote(child.id, todayIso),
+        listGrowthRecords(child.id),
       ]);
       setTemplate(tpl);
       const logMap: Record<string, ScheduleLogEntry> = {};
@@ -99,6 +103,7 @@ export default function HomeScreen() {
       setDoneDevIds(new Set(doneDev.map((d: DevCheck) => d.milestone_id)));
       setTodos(todoRows);
       setNote(noteRow);
+      setGrowthRecords(growthRows);
     } finally {
       setLoading(false);
     }
@@ -179,6 +184,9 @@ export default function HomeScreen() {
   const todayTemps = records.filter((r) => r.type === 'temp').sort((a, b) => a.time.localeCompare(b.time));
   const lastTemp = todayTemps[todayTemps.length - 1];
   const isFever = lastTemp ? Number(lastTemp.amount) >= 37.5 : false;
+
+  const latestGrowth = growthRecords.slice().sort((a, b) => (a.measured_date < b.measured_date ? -1 : 1))[growthRecords.length - 1];
+  const growthPct = latestGrowth?.weight_kg != null ? weightPercentile(child.gender, ageDays(birth, parseISO(latestGrowth.measured_date)), latestGrowth.weight_kg) : null;
 
   const nextVisit = nextPendingVisit(birth, doneVaccineIds);
   const visitImminent = nextVisit ? Math.round((nextVisit.dueDate.getTime() - today.getTime()) / 86400000) <= 7 : false;
@@ -315,6 +323,14 @@ export default function HomeScreen() {
                   {nextVisit ? visitLabel : '모두 완료'}
                 </Text>
                 {nextVisit ? <Text style={styles.pillMeta}>{fmtMD(nextVisit.dueDate)}</Text> : null}
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.pill, latestGrowth ? styles.pillGood : styles.pillNeutral]} onPress={() => router.push('/growth')}>
+                <Text style={[styles.pillLabel, latestGrowth ? styles.pillGoodText : styles.pillNeutralText]}>
+                  {latestGrowth?.weight_kg != null ? `몸무게 ${latestGrowth.weight_kg}kg` : '성장 기록'}
+                </Text>
+                <Text style={[styles.pillSub, latestGrowth ? styles.pillGoodText : styles.pillNeutralText]}>
+                  {growthPct ? `또래 100명 중 ${growthPct.percentile}번째` : latestGrowth ? '' : '눌러서 입력'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
