@@ -6,7 +6,7 @@ import { useAuth } from '../lib/auth-context';
 import { getSignedUrls } from '../lib/api/photos';
 import { todayStart } from '../lib/dates';
 import { Icon } from '../lib/icons';
-import { buildMonthlyReport, type MonthlyReportData } from '../lib/monthly-report';
+import { buildMonthlyReport, formatShortDate, type MonthlyReportData } from '../lib/monthly-report';
 import { useTheme } from '../lib/theme-context';
 import { radius, spacing, type ColorPalette } from '../lib/theme';
 
@@ -175,10 +175,11 @@ export default function MonthlyReportScreen() {
             {report.devChecksThisMonth.length > 0 ? (
               <View style={styles.listBlock}>
                 <Text style={styles.listTitle}>이번 달 새로 해낸 것</Text>
-                {report.devChecksThisMonth.map((m) => (
-                  <Text key={m.id} style={styles.listItem}>
-                    ·  {m.label}
-                  </Text>
+                {report.devChecksThisMonth.map(({ milestone, doneAt }) => (
+                  <View key={milestone.id} style={styles.listRow}>
+                    <Text style={styles.listItem}>·  {milestone.label}</Text>
+                    <Text style={styles.listDate}>{formatShortDate(doneAt)}</Text>
+                  </View>
                 ))}
               </View>
             ) : null}
@@ -186,15 +187,19 @@ export default function MonthlyReportScreen() {
             {report.vaccinesThisMonth.length > 0 || report.checkupsThisMonth.length > 0 ? (
               <View style={styles.listBlock}>
                 <Text style={styles.listTitle}>이번 달 다녀온 병원</Text>
-                {report.vaccinesThisMonth.map((v) => (
-                  <Text key={v.id} style={styles.listItem}>
-                    ·  {v.vaccineName} {v.doseLabel}
-                  </Text>
+                {report.vaccinesThisMonth.map(({ dose, actualDate }) => (
+                  <View key={dose.id} style={styles.listRow}>
+                    <Text style={styles.listItem}>
+                      ·  {dose.vaccineName} {dose.doseLabel}
+                    </Text>
+                    <Text style={styles.listDate}>{formatShortDate(actualDate)}</Text>
+                  </View>
                 ))}
-                {report.checkupsThisMonth.map((c) => (
-                  <Text key={c.id} style={styles.listItem}>
-                    ·  {c.label}
-                  </Text>
+                {report.checkupsThisMonth.map(({ checkup, doneAt }) => (
+                  <View key={checkup.id} style={styles.listRow}>
+                    <Text style={styles.listItem}>·  {checkup.label}</Text>
+                    <Text style={styles.listDate}>{formatShortDate(doneAt)}</Text>
+                  </View>
                 ))}
               </View>
             ) : null}
@@ -256,7 +261,9 @@ function createStyles(colors: ColorPalette) {
     paragraph: { fontSize: 14.5, color: colors.ink, lineHeight: 24, marginBottom: spacing.md },
     listBlock: { marginTop: spacing.sm, marginBottom: spacing.lg },
     listTitle: { fontSize: 12, fontWeight: '800', color: colors.accentInk, marginBottom: 8, letterSpacing: 0.3 },
-    listItem: { fontSize: 13.5, color: colors.ink, lineHeight: 22 },
+    listRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: spacing.sm },
+    listItem: { fontSize: 13.5, color: colors.ink, lineHeight: 22, flex: 1 },
+    listDate: { fontSize: 11.5, color: colors.inkFaint },
     noteBlock: { borderLeftWidth: 2, borderLeftColor: colors.peachDeep, paddingLeft: spacing.md, marginTop: spacing.md },
     noteInput: {
       fontFamily: SERIF,

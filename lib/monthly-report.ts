@@ -48,9 +48,9 @@ export interface MonthlyReportData {
   sleep: {
     avgDailyMinutes: number | null;
   };
-  devChecksThisMonth: DevMilestoneRef[];
-  vaccinesThisMonth: VaccineDoseRef[];
-  checkupsThisMonth: CheckupRef[];
+  devChecksThisMonth: { milestone: DevMilestoneRef; doneAt: string }[];
+  vaccinesThisMonth: { dose: VaccineDoseRef; actualDate: string }[];
+  checkupsThisMonth: { checkup: CheckupRef; doneAt: string }[];
   photos: PhotoEntry[];
 }
 
@@ -134,17 +134,23 @@ export async function buildMonthlyReport(child: Child, year: number, month: numb
     avgDailyMinutes = hasSleepItem ? totalMinutes : null;
   }
 
-  // --- This month's completed dev checks / vaccines / checkups.
-  const devDoneThisMonth = new Set(
-    doneDev.filter((d) => d.done_at >= start && d.done_at < end).map((d) => d.milestone_id),
+  // --- This month's completed dev checks / vaccines / checkups, each with its date.
+  const devDateById = new Map(
+    doneDev.filter((d) => d.done_at >= start && d.done_at < end).map((d) => [d.milestone_id, d.done_at.slice(0, 10)]),
   );
-  const devChecksThisMonth = DEV_MILESTONES.filter((m) => devDoneThisMonth.has(m.id));
+  const devChecksThisMonth = DEV_MILESTONES.filter((m) => devDateById.has(m.id))
+    .map((milestone) => ({ milestone, doneAt: devDateById.get(milestone.id)! }))
+    .sort((a, b) => (a.doneAt < b.doneAt ? -1 : 1));
 
-  const vaxDoneThisMonth = new Set(doneVax.filter((v) => v.actual_date >= start && v.actual_date < end).map((v) => v.vaccine_id));
-  const vaccinesThisMonth = VACCINE_DOSES.filter((v) => vaxDoneThisMonth.has(v.id));
+  const vaxDateById = new Map(doneVax.filter((v) => v.actual_date >= start && v.actual_date < end).map((v) => [v.vaccine_id, v.actual_date]));
+  const vaccinesThisMonth = VACCINE_DOSES.filter((v) => vaxDateById.has(v.id))
+    .map((dose) => ({ dose, actualDate: vaxDateById.get(dose.id)! }))
+    .sort((a, b) => (a.actualDate < b.actualDate ? -1 : 1));
 
-  const chkDoneThisMonth = new Set(doneChk.filter((c) => c.done_at >= start && c.done_at < end).map((c) => c.checkup_id));
-  const checkupsThisMonth = CHECKUPS.filter((c) => chkDoneThisMonth.has(c.id));
+  const chkDateById = new Map(doneChk.filter((c) => c.done_at >= start && c.done_at < end).map((c) => [c.checkup_id, c.done_at]));
+  const checkupsThisMonth = CHECKUPS.filter((c) => chkDateById.has(c.id))
+    .map((checkup) => ({ checkup, doneAt: chkDateById.get(checkup.id)! }))
+    .sort((a, b) => (a.doneAt < b.doneAt ? -1 : 1));
 
   return {
     year,
@@ -166,6 +172,11 @@ export async function buildMonthlyReport(child: Child, year: number, month: numb
     checkupsThisMonth,
     photos,
   };
+}
+
+export function formatShortDate(iso: string): string {
+  const d = parseISO(iso.slice(0, 10));
+  return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
 export { daysInMonth };
