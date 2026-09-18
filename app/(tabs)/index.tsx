@@ -58,13 +58,14 @@ const DEV_GROUPS: (typeof DEV_MILESTONES)[] = (() => {
 })();
 
 export default function HomeScreen() {
-  const { child, family, membership } = useAuth();
+  const { child, children, family, membership, setActiveChildId } = useAuth();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   const todayIso = useMemo(() => toISO(todayStart()), []);
   const [loading, setLoading] = useState(true);
+  const [childSwitcherOpen, setChildSwitcherOpen] = useState(false);
   const [template, setTemplate] = useState<ScheduleTemplateItem[]>([]);
   const [logs, setLogs] = useState<Record<string, ScheduleLogEntry>>({});
   const [records, setRecords] = useState<RecordEntry[]>([]);
@@ -212,12 +213,15 @@ export default function HomeScreen() {
         <View style={styles.avatar}>
           <Icon name="person" size={24} color={colors.accent} />
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.name}>{child.name}</Text>
+        <TouchableOpacity style={styles.nameBlock} onPress={() => setChildSwitcherOpen(true)}>
+          <View style={styles.nameRow}>
+            <Text style={styles.name}>{child.name}</Text>
+            {children.length > 1 ? <Icon name="chevD" size={14} color={colors.inkSoft} /> : null}
+          </View>
           <Text style={styles.age}>
             {months}개월 · D+{days}
           </Text>
-        </View>
+        </TouchableOpacity>
         <View>
           <TouchableOpacity style={styles.bellBtn} onPress={() => setBellOpen((v) => !v)}>
             <Icon name="bell" size={19} color={colors.ink} />
@@ -473,6 +477,36 @@ export default function HomeScreen() {
           </View>
         </View>
       </Modal>
+
+      <Modal visible={childSwitcherOpen} animationType="fade" transparent onRequestClose={() => setChildSwitcherOpen(false)}>
+        <TouchableOpacity style={styles.switcherBackdrop} activeOpacity={1} onPress={() => setChildSwitcherOpen(false)}>
+          <View style={[styles.switcherCard, { marginTop: insets.top + 70 }]}>
+            {children.map((c) => (
+              <TouchableOpacity
+                key={c.id}
+                style={styles.switcherRow}
+                onPress={() => {
+                  setActiveChildId(c.id);
+                  setChildSwitcherOpen(false);
+                }}
+              >
+                <Text style={[styles.switcherName, c.id === child.id && styles.switcherNameActive]}>{c.name}</Text>
+                {c.id === child.id ? <Icon name="check" size={14} color={colors.accentInk} /> : null}
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={[styles.switcherRow, styles.switcherAddRow]}
+              onPress={() => {
+                setChildSwitcherOpen(false);
+                router.push('/onboarding');
+              }}
+            >
+              <Icon name="plus" size={14} color={colors.accentInk} />
+              <Text style={styles.switcherAddText}>아이 추가</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   );
 }
@@ -490,8 +524,35 @@ function createStyles(colors: ColorPalette) {
       alignItems: 'center',
       justifyContent: 'center',
     },
+    nameBlock: { flex: 1 },
+    nameRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     name: { fontSize: 17, fontWeight: '800', color: colors.ink },
     age: { fontSize: 12.5, color: colors.inkSoft, marginTop: 2 },
+    switcherBackdrop: { flex: 1, backgroundColor: 'rgba(20,20,25,0.35)' },
+    switcherCard: {
+      marginHorizontal: spacing.lg,
+      backgroundColor: colors.card,
+      borderRadius: radius.lg,
+      paddingVertical: spacing.sm,
+      shadowColor: '#000',
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 6,
+    },
+    switcherRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.lg,
+      paddingVertical: 13,
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+    },
+    switcherName: { fontSize: 14.5, fontWeight: '600', color: colors.ink },
+    switcherNameActive: { fontWeight: '800', color: colors.accentInk },
+    switcherAddRow: { justifyContent: 'flex-start', gap: 8 },
+    switcherAddText: { fontSize: 14, fontWeight: '700', color: colors.accentInk },
     bellBtn: {
       width: 38,
       height: 38,

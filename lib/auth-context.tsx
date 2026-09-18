@@ -1,26 +1,48 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase, isSupabaseConfigured } from './supabase';
 import type { Child, Family, FamilyMember } from './types';
+
+const ACTIVE_CHILD_KEY = 'todak-active-child-id';
 
 interface AuthState {
   loading: boolean;
   session: Session | null;
   family: Family | null;
   membership: FamilyMember | null;
+  children: Child[];
   child: Child | null;
+  setActiveChildId: (id: string) => void;
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children: reactChildren }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
   const [family, setFamily] = useState<Family | null>(null);
   const [membership, setMembership] = useState<FamilyMember | null>(null);
-  const [child, setChild] = useState<Child | null>(null);
+  const [childList, setChildList] = useState<Child[]>([]);
+  const [activeChildId, setActiveChildIdState] = useState<string | null>(null);
+  const activeChildIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem(ACTIVE_CHILD_KEY).then((saved) => {
+      if (saved) {
+        activeChildIdRef.current = saved;
+        setActiveChildIdState(saved);
+      }
+    });
+  }, []);
+
+  const setActiveChildId = useCallback((id: string) => {
+    activeChildIdRef.current = id;
+    setActiveChildIdState(id);
+    AsyncStorage.setItem(ACTIVE_CHILD_KEY, id);
+  }, []);
 
   const loadFamilyAndChild = useCallback(async (userId: string) => {
     const { data: memberRow } = await supabase
@@ -33,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!memberRow) {
       setMembership(null);
       setFamily(null);
-      setChild(null);
+      setChildList([]);
       return;
     }
     setMembership(memberRow as FamilyMember);
@@ -45,15 +67,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .maybeSingle();
     setFamily((familyRow as Family) ?? null);
 
-    const { data: childRow } = await supabase
+    const { data: childRows } = await supabase
       .from('children')
       .select('*')
       .eq('family_id', memberRow.family_id)
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    setChild((childRow as Child) ?? null);
-  }, []);
+      .order('created_at', { ascending: true });
+    const list = (childRows as Child[]) ?? [];
+    setChildList(list);
+
+    const current = activeChildIdRef.current;
+    if (list.length > 0 && !list.some((c) => c.id === current)) {
+      setActiveChildId(list[0].id);
+    }
+  }, [setActiveChildId]);
 
   const refresh = useCallback(async () => {
     if (!session?.user) return;
@@ -84,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setFamily(null);
         setMembership(null);
-        setChild(null);
+        setChildList([]);
       }
     });
 
@@ -98,12 +124,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   }, []);
 
+  const activeChild = childList.find((c) => c.id === activeChildId) ?? childList[0] ?? null;
+
   const value = useMemo(
-    () => ({ loading, session, family, membership, child, refresh, signOut }),
-    [loading, session, family, membership, child, refresh, signOut],
+    () => ({
+      loading,
+      session,
+      family,
+      membership,
+      children: childList,
+      child: activeChild,
+      setActiveChildId,
+      refresh,
+      signOut,
+    }),
+    [loading, session, family, membership, childList, activeChild, setActiveChildId, refresh, signOut],
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{reactChildren}</AuthContext.Provider>;
 }
 
 export function useAuth() {

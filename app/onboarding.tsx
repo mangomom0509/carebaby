@@ -8,7 +8,7 @@ import { radius, spacing, type ColorPalette } from '../lib/theme';
 import type { Gender } from '../lib/types';
 
 export default function OnboardingScreen() {
-  const { family, refresh } = useAuth();
+  const { family, children, refresh, setActiveChildId } = useAuth();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [name, setName] = useState('');
@@ -16,6 +16,7 @@ export default function OnboardingScreen() {
   const [gender, setGender] = useState<Gender | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isAddingAnother = children.length > 0;
 
   const valid = name.trim().length > 0 && /^\d{4}-\d{2}-\d{2}$/.test(birth) && gender;
 
@@ -24,9 +25,10 @@ export default function OnboardingScreen() {
     setError(null);
     setLoading(true);
     try {
-      await createChild({ familyId: family.id, name: name.trim(), birth, gender: gender! });
+      const newChild = await createChild({ familyId: family.id, name: name.trim(), birth, gender: gender! });
       await refresh();
-      router.replace('/');
+      setActiveChildId(newChild.id);
+      router.replace('/(tabs)');
     } catch (e: any) {
       setError(e.message ?? '등록하지 못했어요. 다시 시도해주세요.');
     } finally {
@@ -36,7 +38,12 @@ export default function OnboardingScreen() {
 
   return (
     <View style={styles.screen}>
-      <Text style={styles.title}>아이 정보를 등록해주세요</Text>
+      {isAddingAnother ? (
+        <TouchableOpacity onPress={() => router.back()} hitSlop={10} style={styles.backBtn}>
+          <Text style={styles.backText}>‹ 뒤로</Text>
+        </TouchableOpacity>
+      ) : null}
+      <Text style={styles.title}>{isAddingAnother ? '새 아이를 추가해주세요' : '아이 정보를 등록해주세요'}</Text>
       <Text style={styles.subtitle}>가족 구성원 모두가 이 정보를 함께 보게 돼요.</Text>
 
       <View style={styles.field}>
@@ -83,6 +90,8 @@ export default function OnboardingScreen() {
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.xl, justifyContent: 'center' },
+    backBtn: { position: 'absolute', top: spacing.xl, left: spacing.xl },
+    backText: { fontSize: 14, color: colors.inkSoft, fontWeight: '600' },
     title: { fontSize: 20, fontWeight: '800', color: colors.ink, marginBottom: 8, textAlign: 'center' },
     subtitle: { fontSize: 13, color: colors.inkSoft, textAlign: 'center', marginBottom: spacing.xl, lineHeight: 19 },
     field: { marginBottom: spacing.lg },

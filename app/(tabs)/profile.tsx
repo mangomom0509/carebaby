@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth-context';
 import { setRegularPattern } from '../../lib/api/children';
@@ -13,7 +14,7 @@ import { radius, spacing, type ColorPalette } from '../../lib/theme';
 const MODE_LABEL: Record<ThemeMode, string> = { light: '라이트', dark: '다크', system: '시스템' };
 
 export default function ProfileScreen() {
-  const { child, family, membership, signOut, refresh } = useAuth();
+  const { child, children, family, membership, signOut, refresh, setActiveChildId } = useAuth();
   const insets = useSafeAreaInsets();
   const { colors, mode, setMode } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -62,6 +63,25 @@ export default function ProfileScreen() {
           {child.gender} · {birth.getFullYear()}.{String(birth.getMonth() + 1).padStart(2, '0')}.{String(birth.getDate()).padStart(2, '0')} 생 ·{' '}
           {months}개월
         </Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.eyebrow}>아이</Text>
+        <View style={styles.childChipRow}>
+          {children.map((c) => (
+            <TouchableOpacity
+              key={c.id}
+              style={[styles.childChip, c.id === child.id && styles.childChipActive]}
+              onPress={() => setActiveChildId(c.id)}
+            >
+              <Text style={[styles.childChipText, c.id === child.id && styles.childChipTextActive]}>{c.name}</Text>
+            </TouchableOpacity>
+          ))}
+          <TouchableOpacity style={styles.childChipAdd} onPress={() => router.push('/onboarding')}>
+            <Icon name="plus" size={13} color={colors.accentInk} />
+            <Text style={styles.childChipAddText}>아이 추가</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.card}>
@@ -138,6 +158,23 @@ function createStyles(colors: ColorPalette) {
       marginBottom: spacing.md,
     },
     eyebrow: { fontSize: 11.5, fontWeight: '700', color: colors.inkSoft, marginBottom: 10 },
+    childChipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+    childChip: { borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.bg, borderRadius: radius.pill, paddingHorizontal: 16, paddingVertical: 9 },
+    childChipActive: { borderColor: colors.peachDeep, backgroundColor: colors.peach },
+    childChipText: { fontSize: 13, fontWeight: '600', color: colors.inkSoft },
+    childChipTextActive: { color: colors.accentInk, fontWeight: '800' },
+    childChipAdd: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      borderStyle: 'dashed',
+      borderRadius: radius.pill,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+    },
+    childChipAddText: { fontSize: 13, fontWeight: '700', color: colors.accentInk },
     rowItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: 2 },
     rowItemBorder: { borderTopWidth: 1, borderTopColor: colors.line, marginTop: spacing.md, paddingTop: spacing.md },
     rowTitle: { fontSize: 13.5, fontWeight: '700', color: colors.ink },
