@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import { setRegularPattern } from '../../lib/api/children';
 import { createInviteCode } from '../../lib/api/family';
 import { ageMonths, parseISO, todayStart } from '../../lib/dates';
 import { Icon } from '../../lib/icons';
+import { getNotificationsEnabled, setNotificationsEnabled } from '../../lib/notifications';
 import { useTheme, type ThemeMode } from '../../lib/theme-context';
 import { radius, spacing, type ColorPalette } from '../../lib/theme';
 
@@ -21,6 +22,19 @@ export default function ProfileScreen() {
   const [code, setCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [notifEnabled, setNotifEnabled] = useState(false);
+
+  useEffect(() => {
+    getNotificationsEnabled().then(setNotifEnabled);
+  }, []);
+
+  const toggleNotifications = async (value: boolean) => {
+    const result = await setNotificationsEnabled(value);
+    setNotifEnabled(result);
+    if (value && !result) {
+      Alert.alert('알림 권한이 필요해요', '기기 설정에서 토닥 앱의 알림 권한을 허용해주세요.');
+    }
+  };
 
   const generateCode = async () => {
     if (!family) return;
@@ -101,6 +115,18 @@ export default function ProfileScreen() {
           <Switch
             value={child.regular_pattern}
             onValueChange={toggleRegularPattern}
+            trackColor={{ false: colors.line, true: colors.accent }}
+            thumbColor="#fff"
+          />
+        </View>
+        <View style={[styles.rowItem, styles.rowItemBorder]}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.rowTitle}>알림 받기</Text>
+            <Text style={styles.rowDesc}>오늘의 스케줄 시간과 예방접종 임박일에 알림을 보내드려요.</Text>
+          </View>
+          <Switch
+            value={notifEnabled}
+            onValueChange={toggleNotifications}
             trackColor={{ false: colors.line, true: colors.accent }}
             thumbColor="#fff"
           />

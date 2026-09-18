@@ -13,6 +13,7 @@ import { getDailyNote, saveDailyNote, setDailyNoteAck } from '../../lib/api/dail
 import { ageDays, ageMonths, dPlus, parseISO, toISO, todayStart } from '../../lib/dates';
 import { computeCurrentStatus, nextByKind, toMin, type CurrentStatus } from '../../lib/schedule-status';
 import { nextPendingVisit } from '../../lib/vaccines';
+import { syncScheduleNotifications, syncVaccineNotification } from '../../lib/notifications';
 import { weightPercentile } from '../../lib/growth-standards';
 import { DEV_MILESTONES } from '../../lib/dev-milestones';
 import { listDoneDevChecks } from '../../lib/api/dev-checks';
@@ -127,6 +128,14 @@ export default function HomeScreen() {
       supabase.removeChannel(channel);
     };
   }, [child, family, todayIso, load]);
+
+  useEffect(() => {
+    if (!child) return;
+    const birthDate = parseISO(child.birth);
+    const visit = nextPendingVisit(birthDate, doneVaccineIds);
+    syncScheduleNotifications(child.name, child.regular_pattern ? template : []);
+    syncVaccineNotification(child.name, visit);
+  }, [child, template, doneVaccineIds]);
 
   const toggleTodo = async (todo: Todo) => {
     await setTodoDone(todo.id, !todo.done);
