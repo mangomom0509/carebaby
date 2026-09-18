@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/auth-context';
+import { getCoverPhotoDate, setCoverPhotoDate } from '../lib/api/monthly-cover';
 import { getSignedUrls } from '../lib/api/photos';
 import { todayStart } from '../lib/dates';
 import { Icon } from '../lib/icons';
@@ -64,22 +65,24 @@ export default function MonthlyReportScreen() {
   const [month, setMonth] = useState(today.getMonth() + 1);
   const [report, setReport] = useState<MonthlyReportData | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
-  const [collageUrls, setCollageUrls] = useState<Record<string, string>>({});
+  const [pickerUrls, setPickerUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState('');
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerBusy, setPickerBusy] = useState(false);
 
   const load = useCallback(async () => {
     if (!child) return;
     setLoading(true);
     try {
-      const data = await buildMonthlyReport(child, year, month);
+      const [data, coverDate] = await Promise.all([buildMonthlyReport(child, year, month), getCoverPhotoDate(child.id, year, month)]);
       setReport(data);
       const sortedPhotos = data.photos.slice().sort((a, b) => (a.photo_date < b.photo_date ? -1 : 1));
       const paths = sortedPhotos.map((p) => p.storage_path);
       const urls = paths.length ? await getSignedUrls(paths) : {};
-      setCollageUrls(urls);
-      const repPhoto = sortedPhotos[sortedPhotos.length - 1];
-      setPhotoUrl(repPhoto ? urls[repPhoto.storage_path] : undefined);
+      setPickerUrls(urls);
+      const chosen = coverDate ? sortedPhotos.find((p) => p.photo_date === coverDate) : undefined;
+      setPhotoUrl(chosen ? urls[chosen.storage_path] : undefined);
     } finally {
       setLoading(false);
     }
@@ -89,6 +92,18 @@ export default function MonthlyReportScreen() {
     load();
     setNote('');
   }, [load]);
+
+  const choosePhoto = async (photoDate: string, storagePath: string) => {
+    if (!child) return;
+    setPickerBusy(true);
+    try {
+      await setCoverPhotoDate(child.id, year, month, photoDate);
+      setPhotoUrl(pickerUrls[storagePath]);
+      setPickerOpen(false);
+    } finally {
+      setPickerBusy(false);
+    }
+  };
 
   const goMonth = (delta: number) => {
     let m = month + delta;
@@ -106,13 +121,7 @@ export default function MonthlyReportScreen() {
 
   if (!child) return null;
 
-  const otherPhotos = report
-    ? report.photos
-        .slice()
-        .sort((a, b) => (a.photo_date < b.photo_date ? -1 : 1))
-        .slice(0, -1)
-        .slice(0, 4)
-    : [];
+  const sortedPhotos = report ? report.photos.slice().sort((a, b) => (a.photo_date < b.photo_date ? -1 : 1)) : [];
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + spacing.lg }]}>
@@ -146,24 +155,18 @@ export default function MonthlyReportScreen() {
             </Text>
 
             {photoUrl ? (
-              <>
+              <TouchableOpacity onPress={() => setPickerOpen(true)} disabled={sortedPhotos.length === 0}>
                 <Image source={{ uri: photoUrl }} style={styles.mainPhoto} />
                 <Text style={styles.photoCaption}>
                   {year}년 {month}월의 {child.name}
+                  {sortedPhotos.length > 1 ? ' · 눌러서 사진 바꾸기' : ''}
                 </Text>
-              </>
-            ) : null}
-
-            {otherPhotos.length > 0 ? (
-              <View style={styles.filmRow}>
-                {otherPhotos.map((p, i) => (
-                  <Image
-                    key={p.photo_date}
-                    source={{ uri: collageUrls[p.storage_path] }}
-                    style={[styles.filmThumb, { transform: [{ rotate: `${i % 2 === 0 ? -3 : 3}deg` }] }]}
-                  />
-                ))}
-              </View>
+              </TouchableOpacity>
+            ) : sortedPhotos.length > 0 ? (
+              <TouchableOpacity style={styles.choosePhotoBox} onPress={() => setPickerOpen(true)}>
+                <Icon name="camera" size={26} color={colors.inkFaint} />
+                <Text style={styles.choosePhotoText}>대표 사진 고르기</Text>
+              </TouchableOpacity>
             ) : null}
 
             <View style={styles.divider} />
@@ -219,6 +222,22 @@ export default function MonthlyReportScreen() {
           </View>
         </ScrollView>
       )}
+
+      <Modal visible={pickerOpen} animationType="slide" transparent onRequestClose={() => setPickerOpen(false)}>
+        <View style={styles.pickerBackdrop}>
+          <View style={[styles.pickerCard, { paddingBottom: insets.bottom + spacing.lg }]}>
+            <Text style={styles.pickerTitle}>대표 사진 고르기</Text>
+            <ScrollView contentContainerStyle={styles.pickerGrid}>
+              {sortedPhotos.map((p) => (
+                <TouchableOpacity key={p.photo_date} style={styles.pickerCell} onPress={() => choosePhoto(p.photo_date, p.storage_path)} disabled={pickerBusy}>
+                  {pickerUrls[p.storage_path] ? <Image source={{ uri: pickerUrls[p.storage_path] }} style={styles.pickerThumb} /> : null}
+                  <Text style={styles.pickerDate}>{formatShortDate(p.photo_date)}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -244,19 +263,18 @@ function createStyles(colors: ColorPalette) {
     pageTitle: { fontFamily: SERIF, fontSize: 22, color: colors.ink, textAlign: 'center', marginBottom: spacing.lg, lineHeight: 30 },
     mainPhoto: { width: '100%', aspectRatio: 1.15, borderRadius: radius.md },
     photoCaption: { fontFamily: SERIF, fontStyle: 'italic', fontSize: 12.5, color: colors.inkSoft, textAlign: 'center', marginTop: 8 },
-    filmRow: { flexDirection: 'row', justifyContent: 'center', gap: 14, marginTop: spacing.lg, paddingHorizontal: spacing.sm },
-    filmThumb: {
-      width: 56,
-      height: 56,
-      borderRadius: 4,
-      borderWidth: 3,
-      borderColor: colors.card,
-      backgroundColor: colors.line,
-      shadowColor: '#000',
-      shadowOpacity: 0.15,
-      shadowRadius: 4,
-      shadowOffset: { width: 0, height: 2 },
+    choosePhotoBox: {
+      width: '100%',
+      aspectRatio: 1.15,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      borderStyle: 'dashed',
+      backgroundColor: colors.bg,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
+    choosePhotoText: { fontSize: 12.5, color: colors.inkSoft, marginTop: 8 },
     divider: { height: 1, backgroundColor: colors.line, marginVertical: spacing.xl },
     paragraph: { fontSize: 14.5, color: colors.ink, lineHeight: 24, marginBottom: spacing.md },
     listBlock: { marginTop: spacing.sm, marginBottom: spacing.lg },
@@ -276,5 +294,12 @@ function createStyles(colors: ColorPalette) {
       padding: 0,
     },
     pageFooter: { fontSize: 10.5, color: colors.inkFaint, textAlign: 'center', marginTop: spacing.xl, letterSpacing: 0.5 },
+    pickerBackdrop: { flex: 1, backgroundColor: 'rgba(20,20,25,0.4)', justifyContent: 'flex-end' },
+    pickerCard: { backgroundColor: colors.card, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: spacing.lg, maxHeight: '75%' },
+    pickerTitle: { fontSize: 16, fontWeight: '800', color: colors.ink, marginBottom: spacing.md },
+    pickerGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, paddingBottom: spacing.lg },
+    pickerCell: { width: '31%', alignItems: 'center' },
+    pickerThumb: { width: '100%', aspectRatio: 1, borderRadius: radius.sm, backgroundColor: colors.line },
+    pickerDate: { fontSize: 11, color: colors.inkSoft, marginTop: 4 },
   });
 }

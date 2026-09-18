@@ -164,6 +164,16 @@ create table growth_records (
   unique (child_id, measured_date)
 );
 
+-- Which day's photo represents each month in "이달의 이야기" (monthly report).
+create table monthly_cover_photos (
+  child_id uuid not null references children(id) on delete cascade,
+  year int not null,
+  month int not null,
+  photo_date date not null,
+  created_at timestamptz not null default now(),
+  primary key (child_id, year, month)
+);
+
 -- ---------------------------------------------------------------------------
 -- Row Level Security
 -- ---------------------------------------------------------------------------
@@ -183,6 +193,7 @@ alter table diary_entries enable row level security;
 alter table daily_notes enable row level security;
 alter table photos enable row level security;
 alter table growth_records enable row level security;
+alter table monthly_cover_photos enable row level security;
 
 create or replace function is_family_member(p_family_id uuid)
 returns boolean
@@ -275,6 +286,10 @@ create policy "photos: family members full access" on photos
   with check (is_family_member(family_id_for_child(child_id)));
 
 create policy "growth_records: family members full access" on growth_records
+  for all using (is_family_member(family_id_for_child(child_id)))
+  with check (is_family_member(family_id_for_child(child_id)));
+
+create policy "monthly_cover_photos: family members full access" on monthly_cover_photos
   for all using (is_family_member(family_id_for_child(child_id)))
   with check (is_family_member(family_id_for_child(child_id)));
 
