@@ -1,21 +1,57 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Sharing from 'expo-sharing';
-import ViewShot, { type ViewShotRef } from 'react-native-view-shot';
 import { useAuth } from '../lib/auth-context';
 import { getSignedUrls } from '../lib/api/photos';
 import { todayStart } from '../lib/dates';
 import { Icon } from '../lib/icons';
-import { buildMonthlyReport, daysInMonth, type MonthlyReportData } from '../lib/monthly-report';
+import { buildMonthlyReport, type MonthlyReportData } from '../lib/monthly-report';
 import { useTheme } from '../lib/theme-context';
 import { radius, spacing, type ColorPalette } from '../lib/theme';
+
+const SERIF = Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia' });
 
 function fmtMinutes(mins: number): string {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return m ? `${h}시간 ${m}분` : `${h}시간`;
+}
+
+function growthParagraph(data: MonthlyReportData): string | null {
+  const { latest, previous, weightPct } = data.growth;
+  if (!latest) return null;
+  const parts: string[] = [];
+  if (latest.weight_kg != null) {
+    let s = `몸무게는 ${latest.weight_kg}kg`;
+    if (previous?.weight_kg != null) s += ` (지난번보다 +${(latest.weight_kg - previous.weight_kg).toFixed(1)}kg)`;
+    parts.push(s);
+  }
+  if (latest.height_cm != null) {
+    let s = `키는 ${latest.height_cm}cm`;
+    if (previous?.height_cm != null) s += ` (+${(latest.height_cm - previous.height_cm).toFixed(1)}cm)`;
+    parts.push(s);
+  }
+  if (latest.head_circumference_cm != null) parts.push(`머리둘레는 ${latest.head_circumference_cm}cm`);
+  if (parts.length === 0) return null;
+  let sentence = parts.join(', ') + '였어요.';
+  if (weightPct) sentence += ` 또래 100명 중 ${weightPct.percentile}번째로 튼튼하게 크고 있어요.`;
+  return sentence;
+}
+
+function feedingParagraph(data: MonthlyReportData): string | null {
+  const { feedCount, feedAvgAmount, mealCount, snackCount } = data.feeding;
+  if (!feedCount && !mealCount && !snackCount) return null;
+  const parts: string[] = [];
+  if (feedCount) parts.push(`하루 평균 ${feedAvgAmount}ml씩 총 ${feedCount}번 수유`);
+  if (mealCount) parts.push(`이유식 ${mealCount}번`);
+  if (snackCount) parts.push(`간식 ${snackCount}번`);
+  return parts.join(', ') + ' 먹었어요.';
+}
+
+function sleepParagraph(data: MonthlyReportData): string | null {
+  if (data.sleep.avgDailyMinutes == null) return null;
+  return `하루 평균 ${fmtMinutes(data.sleep.avgDailyMinutes)} 잤어요.`;
 }
 
 export default function MonthlyReportScreen() {
@@ -31,8 +67,6 @@ export default function MonthlyReportScreen() {
   const [collageUrls, setCollageUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState('');
-  const [sharing, setSharing] = useState(false);
-  const shotRef = useRef<ViewShotRef>(null);
 
   const load = useCallback(async () => {
     if (!child) return;
@@ -70,25 +104,15 @@ export default function MonthlyReportScreen() {
     setMonth(m);
   };
 
-  const share = async () => {
-    if (!shotRef.current) return;
-    setSharing(true);
-    try {
-      const uri = await shotRef.current.capture();
-      const available = await Sharing.isAvailableAsync();
-      if (available) {
-        await Sharing.shareAsync(uri);
-      } else {
-        Alert.alert('공유할 수 없어요', '이 기기에서는 공유 기능을 사용할 수 없어요.');
-      }
-    } catch (e) {
-      Alert.alert('공유 실패', e instanceof Error ? e.message : '알 수 없는 오류가 발생했어요.');
-    } finally {
-      setSharing(false);
-    }
-  };
-
   if (!child) return null;
+
+  const otherPhotos = report
+    ? report.photos
+        .slice()
+        .sort((a, b) => (a.photo_date < b.photo_date ? -1 : 1))
+        .slice(0, -1)
+        .slice(0, 4)
+    : [];
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + spacing.lg }]}>
@@ -96,17 +120,7 @@ export default function MonthlyReportScreen() {
         <TouchableOpacity onPress={() => router.back()} hitSlop={10} style={styles.backBtn}>
           <Icon name="chevL" size={18} color={colors.ink} />
         </TouchableOpacity>
-        <View style={styles.monthNav}>
-          <TouchableOpacity onPress={() => goMonth(-1)} hitSlop={10}>
-            <Icon name="chevL" size={16} color={colors.ink} />
-          </TouchableOpacity>
-          <Text style={styles.title}>
-            {year}년 {month}월
-          </Text>
-          <TouchableOpacity onPress={() => goMonth(1)} hitSlop={10}>
-            <Icon name="chevR" size={16} color={colors.ink} />
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.headerTitle}>이달의 이야기</Text>
         <View style={{ width: 28 }} />
       </View>
 
@@ -114,164 +128,92 @@ export default function MonthlyReportScreen() {
         <ActivityIndicator style={{ marginTop: spacing.xl }} color={colors.ink} />
       ) : (
         <ScrollView contentContainerStyle={{ paddingBottom: spacing.xl * 2 }}>
-          <ViewShot ref={shotRef} options={{ format: 'png', quality: 0.95 }} style={styles.card}>
-            <View style={styles.cardBadge}>
-              <Text style={styles.cardBadgeText}>토닥</Text>
+          <View style={styles.page}>
+            <View style={styles.monthNav}>
+              <TouchableOpacity onPress={() => goMonth(-1)} hitSlop={10}>
+                <Icon name="chevL" size={15} color={colors.inkSoft} />
+              </TouchableOpacity>
+              <Text style={styles.monthLabel}>
+                {year}년 {month}월
+              </Text>
+              <TouchableOpacity onPress={() => goMonth(1)} hitSlop={10}>
+                <Icon name="chevR" size={15} color={colors.inkSoft} />
+              </TouchableOpacity>
             </View>
-            <Text style={styles.cardTitle}>
-              {report.ageMonthsAtEnd}개월 성장보고서
-            </Text>
-            <Text style={styles.cardSubtitle}>
-              {child.name} · {year}.{String(month).padStart(2, '0')}
+
+            <Text style={styles.pageTitle}>
+              {report.ageMonthsAtEnd}개월, {child.name}의 기록
             </Text>
 
             {photoUrl ? (
-              <Image source={{ uri: photoUrl }} style={styles.repPhoto} />
-            ) : (
-              <View style={[styles.repPhoto, styles.repPhotoEmpty]}>
-                <Text style={styles.emptyText}>이 달에 등록된 사진이 없어요</Text>
+              <>
+                <Image source={{ uri: photoUrl }} style={styles.mainPhoto} />
+                <Text style={styles.photoCaption}>
+                  {year}년 {month}월의 {child.name}
+                </Text>
+              </>
+            ) : null}
+
+            {otherPhotos.length > 0 ? (
+              <View style={styles.filmRow}>
+                {otherPhotos.map((p, i) => (
+                  <Image
+                    key={p.photo_date}
+                    source={{ uri: collageUrls[p.storage_path] }}
+                    style={[styles.filmThumb, { transform: [{ rotate: `${i % 2 === 0 ? -3 : 3}deg` }] }]}
+                  />
+                ))}
               </View>
-            )}
+            ) : null}
 
-            <Text style={styles.sectionLabel}>신체 정보</Text>
-            <View style={styles.statBlock}>
-              <StatRow
-                label="몸무게"
-                value={report.growth.latest?.weight_kg != null ? `${report.growth.latest.weight_kg}kg` : '기록 없음'}
-                delta={
-                  report.growth.previous?.weight_kg != null && report.growth.latest?.weight_kg != null
-                    ? `+${(report.growth.latest.weight_kg - report.growth.previous.weight_kg).toFixed(1)}kg`
-                    : null
-                }
-                pct={report.growth.weightPct?.percentile}
-                colors={colors}
-                styles={styles}
-              />
-              <StatRow
-                label="키"
-                value={report.growth.latest?.height_cm != null ? `${report.growth.latest.height_cm}cm` : '기록 없음'}
-                delta={
-                  report.growth.previous?.height_cm != null && report.growth.latest?.height_cm != null
-                    ? `+${(report.growth.latest.height_cm - report.growth.previous.height_cm).toFixed(1)}cm`
-                    : null
-                }
-                pct={report.growth.heightPct?.percentile}
-                colors={colors}
-                styles={styles}
-              />
-              <StatRow
-                label="머리둘레"
-                value={report.growth.latest?.head_circumference_cm != null ? `${report.growth.latest.head_circumference_cm}cm` : '기록 없음'}
-                delta={null}
-                pct={report.growth.headPct?.percentile}
-                colors={colors}
-                styles={styles}
-              />
-            </View>
+            <View style={styles.divider} />
 
-            <Text style={styles.sectionLabel}>수유·이유식</Text>
-            <View style={styles.chipRow}>
-              <Text style={styles.infoChip}>
-                {report.feeding.feedCount > 0 ? `수유 평균 ${report.feeding.feedAvgAmount}ml · ${report.feeding.feedCount}회` : '수유 기록 없음'}
-              </Text>
-              {report.feeding.mealCount > 0 ? <Text style={styles.infoChip}>이유식 {report.feeding.mealCount}회</Text> : null}
-              {report.feeding.snackCount > 0 ? <Text style={styles.infoChip}>간식 {report.feeding.snackCount}회</Text> : null}
-            </View>
-
-            <Text style={styles.sectionLabel}>수면</Text>
-            <Text style={styles.infoChip}>
-              {report.sleep.avgDailyMinutes != null ? `하루 평균 ${fmtMinutes(report.sleep.avgDailyMinutes)}` : '타임라인 모드에서는 표시되지 않아요'}
-            </Text>
+            {growthParagraph(report) ? <Text style={styles.paragraph}>{growthParagraph(report)}</Text> : null}
+            {feedingParagraph(report) ? <Text style={styles.paragraph}>{feedingParagraph(report)}</Text> : null}
+            {sleepParagraph(report) ? <Text style={styles.paragraph}>{sleepParagraph(report)}</Text> : null}
 
             {report.devChecksThisMonth.length > 0 ? (
-              <>
-                <Text style={styles.sectionLabel}>이번 달 새로 해낸 것</Text>
-                <View style={styles.chipRow}>
-                  {report.devChecksThisMonth.map((m) => (
-                    <Text key={m.id} style={styles.infoChip}>
-                      {m.label}
-                    </Text>
-                  ))}
-                </View>
-              </>
+              <View style={styles.listBlock}>
+                <Text style={styles.listTitle}>이번 달 새로 해낸 것</Text>
+                {report.devChecksThisMonth.map((m) => (
+                  <Text key={m.id} style={styles.listItem}>
+                    ·  {m.label}
+                  </Text>
+                ))}
+              </View>
             ) : null}
 
             {report.vaccinesThisMonth.length > 0 || report.checkupsThisMonth.length > 0 ? (
-              <>
-                <Text style={styles.sectionLabel}>이번 달 접종·검진</Text>
-                <View style={styles.chipRow}>
-                  {report.vaccinesThisMonth.map((v) => (
-                    <Text key={v.id} style={styles.infoChip}>
-                      {v.vaccineName} {v.doseLabel}
-                    </Text>
-                  ))}
-                  {report.checkupsThisMonth.map((c) => (
-                    <Text key={c.id} style={styles.infoChip}>
-                      {c.label}
-                    </Text>
-                  ))}
-                </View>
-              </>
+              <View style={styles.listBlock}>
+                <Text style={styles.listTitle}>이번 달 다녀온 병원</Text>
+                {report.vaccinesThisMonth.map((v) => (
+                  <Text key={v.id} style={styles.listItem}>
+                    ·  {v.vaccineName} {v.doseLabel}
+                  </Text>
+                ))}
+                {report.checkupsThisMonth.map((c) => (
+                  <Text key={c.id} style={styles.listItem}>
+                    ·  {c.label}
+                  </Text>
+                ))}
+              </View>
             ) : null}
 
-            {report.photos.length > 1 ? (
-              <>
-                <Text style={styles.sectionLabel}>이번 달 사진 모음</Text>
-                <View style={styles.collageRow}>
-                  {report.photos
-                    .slice()
-                    .sort((a, b) => (a.photo_date < b.photo_date ? -1 : 1))
-                    .slice(0, 6)
-                    .map((p) =>
-                      collageUrls[p.storage_path] ? (
-                        <Image key={p.photo_date} source={{ uri: collageUrls[p.storage_path] }} style={styles.collageThumb} />
-                      ) : null,
-                    )}
-                </View>
-              </>
-            ) : null}
+            <View style={styles.noteBlock}>
+              <TextInput
+                style={styles.noteInput}
+                value={note}
+                onChangeText={setNote}
+                placeholder="이번 달 우리 아이는 이랬어요..."
+                placeholderTextColor={colors.inkFaint}
+                multiline
+              />
+            </View>
 
-            <Text style={styles.sectionLabel}>특이 발달사항 / 한마디</Text>
-            <TextInput
-              style={styles.noteInput}
-              value={note}
-              onChangeText={setNote}
-              placeholder="이번 달 우리 아이는 이랬어요..."
-              placeholderTextColor={colors.inkFaint}
-              multiline
-            />
-          </ViewShot>
-
-          <TouchableOpacity style={styles.shareBtn} onPress={share} disabled={sharing}>
-            {sharing ? <ActivityIndicator color={colors.accentOn} /> : <Text style={styles.shareBtnText}>카드 공유하기</Text>}
-          </TouchableOpacity>
+            <Text style={styles.pageFooter}>{child.name}의 이야기 · {report.ageMonthsAtEnd}번째 달</Text>
+          </View>
         </ScrollView>
       )}
-    </View>
-  );
-}
-
-function StatRow({
-  label,
-  value,
-  delta,
-  pct,
-  colors,
-  styles,
-}: {
-  label: string;
-  value: string;
-  delta: string | null;
-  pct?: number;
-  colors: ColorPalette;
-  styles: ReturnType<typeof createStyles>;
-}) {
-  return (
-    <View style={styles.statRow}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-      {delta ? <Text style={styles.statDelta}>{delta}</Text> : null}
-      {pct != null ? <Text style={styles.statPct}>또래 100명 중 {pct}번째</Text> : null}
     </View>
   );
 }
@@ -281,51 +223,51 @@ function createStyles(colors: ColorPalette) {
     screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.lg },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
     backBtn: { width: 28 },
-    monthNav: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-    title: { fontSize: 16, fontWeight: '800', color: colors.ink },
-    card: {
-      backgroundColor: colors.peach,
+    headerTitle: { fontSize: 16, fontWeight: '800', color: colors.ink },
+    page: {
+      backgroundColor: colors.card,
       borderRadius: radius.lg,
-      padding: spacing.lg,
-      marginBottom: spacing.lg,
+      padding: spacing.xl,
+      shadowColor: '#000',
+      shadowOpacity: 0.06,
+      shadowRadius: 18,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 2,
     },
-    cardBadge: { alignSelf: 'flex-end', backgroundColor: colors.card, borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 5, marginBottom: spacing.sm },
-    cardBadgeText: { fontSize: 11, fontWeight: '800', color: colors.accentInk },
-    cardTitle: { fontSize: 20, fontWeight: '800', color: colors.ink, textAlign: 'center', marginTop: spacing.xs },
-    cardSubtitle: { fontSize: 12.5, color: colors.inkSoft, textAlign: 'center', marginTop: 4, marginBottom: spacing.md },
-    repPhoto: { width: '100%', aspectRatio: 1.3, borderRadius: radius.lg, marginBottom: spacing.md },
-    repPhotoEmpty: { backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
-    emptyText: { fontSize: 12, color: colors.inkFaint },
-    sectionLabel: { fontSize: 12, fontWeight: '800', color: colors.accentInk, marginTop: spacing.md, marginBottom: 8 },
-    statBlock: { backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md },
-    statRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8, paddingVertical: 6 },
-    statLabel: { fontSize: 12, fontWeight: '700', color: colors.inkSoft, width: 56 },
-    statValue: { fontSize: 15, fontWeight: '800', color: colors.ink },
-    statDelta: { fontSize: 11.5, fontWeight: '700', color: colors.accentInk },
-    statPct: { fontSize: 11, color: colors.inkSoft, marginLeft: 'auto' },
-    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-    infoChip: {
-      fontSize: 11.5,
-      fontWeight: '700',
-      color: colors.accentInk,
-      backgroundColor: colors.card,
-      borderRadius: radius.pill,
-      paddingHorizontal: 11,
-      paddingVertical: 6,
-      overflow: 'hidden',
+    monthNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.md, marginBottom: spacing.lg },
+    monthLabel: { fontSize: 11.5, fontWeight: '700', color: colors.inkFaint, letterSpacing: 0.5 },
+    pageTitle: { fontFamily: SERIF, fontSize: 22, color: colors.ink, textAlign: 'center', marginBottom: spacing.lg, lineHeight: 30 },
+    mainPhoto: { width: '100%', aspectRatio: 1.15, borderRadius: radius.md },
+    photoCaption: { fontFamily: SERIF, fontStyle: 'italic', fontSize: 12.5, color: colors.inkSoft, textAlign: 'center', marginTop: 8 },
+    filmRow: { flexDirection: 'row', justifyContent: 'center', gap: 14, marginTop: spacing.lg, paddingHorizontal: spacing.sm },
+    filmThumb: {
+      width: 56,
+      height: 56,
+      borderRadius: 4,
+      borderWidth: 3,
+      borderColor: colors.card,
+      backgroundColor: colors.line,
+      shadowColor: '#000',
+      shadowOpacity: 0.15,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
     },
-    collageRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-    collageThumb: { width: '31%', aspectRatio: 1, borderRadius: radius.sm },
+    divider: { height: 1, backgroundColor: colors.line, marginVertical: spacing.xl },
+    paragraph: { fontSize: 14.5, color: colors.ink, lineHeight: 24, marginBottom: spacing.md },
+    listBlock: { marginTop: spacing.sm, marginBottom: spacing.lg },
+    listTitle: { fontSize: 12, fontWeight: '800', color: colors.accentInk, marginBottom: 8, letterSpacing: 0.3 },
+    listItem: { fontSize: 13.5, color: colors.ink, lineHeight: 22 },
+    noteBlock: { borderLeftWidth: 2, borderLeftColor: colors.peachDeep, paddingLeft: spacing.md, marginTop: spacing.md },
     noteInput: {
-      minHeight: 56,
-      borderRadius: radius.md,
-      backgroundColor: colors.card,
-      padding: spacing.md,
-      fontSize: 13,
-      color: colors.ink,
+      fontFamily: SERIF,
+      fontStyle: 'italic',
+      fontSize: 14,
+      color: colors.inkSoft,
+      lineHeight: 22,
+      minHeight: 50,
       textAlignVertical: 'top',
+      padding: 0,
     },
-    shareBtn: { backgroundColor: colors.accent, borderRadius: radius.md, paddingVertical: 15, alignItems: 'center' },
-    shareBtnText: { color: colors.accentOn, fontSize: 15, fontWeight: '700' },
+    pageFooter: { fontSize: 10.5, color: colors.inkFaint, textAlign: 'center', marginTop: spacing.xl, letterSpacing: 0.5 },
   });
 }
