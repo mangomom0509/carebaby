@@ -146,22 +146,27 @@ export default function CalendarScreen() {
   return (
     <View style={[styles.screen, { paddingTop: insets.top + spacing.lg }]}>
       <View style={styles.header}>
-        <View style={styles.headerSide} />
-        <View style={styles.monthNav}>
-          <TouchableOpacity onPress={() => goMonth(-1)} hitSlop={10}>
-            <Icon name="chevL" size={18} color={colors.ink} />
-          </TouchableOpacity>
-          <Text style={styles.title}>
-            {year}년 {month}월
-          </Text>
-          <TouchableOpacity onPress={() => goMonth(1)} hitSlop={10}>
-            <Icon name="chevR" size={18} color={colors.ink} />
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity style={styles.headerSide} onPress={() => router.push('/monthly-report')} hitSlop={10}>
-          <Icon name="book" size={19} color={colors.ink} />
+        <TouchableOpacity onPress={() => goMonth(-1)} hitSlop={10}>
+          <Icon name="chevL" size={18} color={colors.ink} />
+        </TouchableOpacity>
+        <Text style={styles.title}>
+          {year}년 {month}월
+        </Text>
+        <TouchableOpacity onPress={() => goMonth(1)} hitSlop={10}>
+          <Icon name="chevR" size={18} color={colors.ink} />
         </TouchableOpacity>
       </View>
+
+      <TouchableOpacity style={styles.storyBanner} onPress={() => router.push('/monthly-report')}>
+        <View style={styles.storyBannerIcon}>
+          <Icon name="book" size={18} color={colors.accentInk} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.storyBannerTitle}>이달의 이야기</Text>
+          <Text style={styles.storyBannerDesc}>이번 달 기록을 한 페이지로 모아봤어요</Text>
+        </View>
+        <Icon name="chevR" size={16} color={colors.inkSoft} />
+      </TouchableOpacity>
 
       {loading ? (
         <ActivityIndicator style={{ marginTop: spacing.xl }} color={colors.ink} />
@@ -502,9 +507,26 @@ function DayDetailModal({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.lg },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
-    headerSide: { width: 28, alignItems: 'center' },
-    monthNav: { flexDirection: 'row', alignItems: 'center', gap: spacing.xl },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xl, marginBottom: spacing.md },
+    storyBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      backgroundColor: colors.peach,
+      borderRadius: radius.lg,
+      padding: spacing.md,
+      marginBottom: spacing.lg,
+    },
+    storyBannerIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: 12,
+      backgroundColor: colors.card,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    storyBannerTitle: { fontSize: 14, fontWeight: '800', color: colors.ink },
+    storyBannerDesc: { fontSize: 11.5, color: colors.inkSoft, marginTop: 2 },
     title: { fontSize: 18, fontWeight: '800', color: colors.ink },
     weekdayRow: { flexDirection: 'row' },
     weekdayText: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '700', color: colors.inkFaint, marginBottom: spacing.xs },
