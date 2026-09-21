@@ -25,6 +25,14 @@ function monthRange(year: number, month: number): { start: string; end: string }
   return { start, end };
 }
 
+// dev_checks.done_at is a timestamptz; convert to the device's local calendar
+// date before bucketing by month or displaying it, so an early-morning KST
+// check-off near a month boundary isn't misfiled under the UTC date instead.
+function localDateOf(isoTimestamp: string): string {
+  const d = new Date(isoTimestamp);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export interface MonthlyReportData {
   year: number;
   month: number;
@@ -136,7 +144,7 @@ export async function buildMonthlyReport(child: Child, year: number, month: numb
 
   // --- This month's completed dev checks / vaccines / checkups, each with its date.
   const devDateById = new Map(
-    doneDev.filter((d) => d.done_at >= start && d.done_at < end).map((d) => [d.milestone_id, d.done_at.slice(0, 10)]),
+    doneDev.map((d) => [d.milestone_id, localDateOf(d.done_at)] as const).filter(([, date]) => date >= start && date < end),
   );
   const devChecksThisMonth = DEV_MILESTONES.filter((m) => devDateById.has(m.id))
     .map((milestone) => ({ milestone, doneAt: devDateById.get(milestone.id)! }))

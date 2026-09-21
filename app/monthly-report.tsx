@@ -19,23 +19,27 @@ function fmtMinutes(mins: number): string {
   return m ? `${h}시간 ${m}분` : `${h}시간`;
 }
 
+function signed(diff: number): string {
+  return `${diff >= 0 ? '+' : ''}${diff.toFixed(1)}`;
+}
+
 function growthParagraph(data: MonthlyReportData): string | null {
   const { latest, previous, weightPct } = data.growth;
   if (!latest) return null;
   const parts: string[] = [];
   if (latest.weight_kg != null) {
     let s = `몸무게는 ${latest.weight_kg}kg`;
-    if (previous?.weight_kg != null) s += ` (지난번보다 +${(latest.weight_kg - previous.weight_kg).toFixed(1)}kg)`;
+    if (previous?.weight_kg != null) s += ` (지난번보다 ${signed(latest.weight_kg - previous.weight_kg)}kg)`;
     parts.push(s);
   }
   if (latest.height_cm != null) {
     let s = `키는 ${latest.height_cm}cm`;
-    if (previous?.height_cm != null) s += ` (+${(latest.height_cm - previous.height_cm).toFixed(1)}cm)`;
+    if (previous?.height_cm != null) s += ` (${signed(latest.height_cm - previous.height_cm)}cm)`;
     parts.push(s);
   }
   if (latest.head_circumference_cm != null) parts.push(`머리둘레는 ${latest.head_circumference_cm}cm`);
   if (parts.length === 0) return null;
-  let sentence = parts.join(', ') + '였어요.';
+  let sentence = `${formatShortDate(latest.measured_date)} 기준 ` + parts.join(', ') + '였어요.';
   if (weightPct) sentence += ` 또래 100명 중 ${weightPct.percentile}번째로 튼튼하게 크고 있어요.`;
   return sentence;
 }

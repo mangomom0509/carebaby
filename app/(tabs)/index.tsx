@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth-context';
 import { supabase } from '../../lib/supabase';
@@ -11,7 +11,7 @@ import { listGrowthRecords } from '../../lib/api/growth';
 import { listTodos, addTodo, deleteTodo, setTodoDone } from '../../lib/api/todos';
 import { getDailyNote, saveDailyNote, setDailyNoteAck } from '../../lib/api/daily-notes';
 import { ageDays, ageMonths, dPlus, parseISO, toISO, todayStart } from '../../lib/dates';
-import { computeCurrentStatus, nextByKind, toMin, type CurrentStatus } from '../../lib/schedule-status';
+import { computeCurrentStatus, nextByKind, scheduleItemKind, toMin, type CurrentStatus } from '../../lib/schedule-status';
 import { nextPendingVisit } from '../../lib/vaccines';
 import { syncScheduleNotifications, syncVaccineNotification } from '../../lib/notifications';
 import { weightPercentile } from '../../lib/growth-standards';
@@ -111,9 +111,11 @@ export default function HomeScreen() {
     }
   }, [child, family, todayIso]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
 
   useEffect(() => {
     if (!child || !family) return;
@@ -123,6 +125,9 @@ export default function HomeScreen() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'records', filter: `child_id=eq.${child.id}` }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'todos', filter: `family_id=eq.${family.id}` }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_notes', filter: `child_id=eq.${child.id}` }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'growth_records', filter: `child_id=eq.${child.id}` }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vaccine_doses', filter: `child_id=eq.${child.id}` }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'dev_checks', filter: `child_id=eq.${child.id}` }, () => load())
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
@@ -190,6 +195,8 @@ export default function HomeScreen() {
   const statusMeta = STATUS_META[currentStatus];
   const nextMeal = nextByKind(template, logs, 'meal', nowMin);
   const nextSleep = nextByKind(template, logs, 'sleep', nowMin);
+  const hasMealItem = template.some((t) => scheduleItemKind(t.label) === 'meal');
+  const hasSleepItem = template.some((t) => scheduleItemKind(t.label) === 'sleep');
 
   const todayTemps = records.filter((r) => r.type === 'temp').sort((a, b) => a.time.localeCompare(b.time));
   const lastTemp = todayTemps[todayTemps.length - 1];
@@ -285,7 +292,7 @@ export default function HomeScreen() {
                 </View>
               ) : (
                 <View style={[styles.todayTile, styles.todayTileEmpty]}>
-                  <Text style={styles.tlSub}>오늘 식사 일정{'\n'}완료</Text>
+                  <Text style={styles.tlSub}>{hasMealItem ? '오늘 식사 일정\n완료' : '등록된 식사\n일정이 없어요'}</Text>
                 </View>
               )}
               {nextSleep ? (
@@ -296,7 +303,7 @@ export default function HomeScreen() {
                 </View>
               ) : (
                 <View style={[styles.todayTile, styles.todayTileEmpty]}>
-                  <Text style={styles.tlSub}>오늘 잠 일정{'\n'}완료</Text>
+                  <Text style={styles.tlSub}>{hasSleepItem ? '오늘 잠 일정\n완료' : '등록된 잠\n일정이 없어요'}</Text>
                 </View>
               )}
             </View>

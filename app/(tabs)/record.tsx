@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth-context';
 import { supabase } from '../../lib/supabase';
@@ -123,9 +123,11 @@ export default function RecordScreen() {
     }
   }, [child, todayIso]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
 
   useEffect(() => {
     if (!child) return;
@@ -134,6 +136,7 @@ export default function RecordScreen() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'schedule_log', filter: `child_id=eq.${child.id}` }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'records', filter: `child_id=eq.${child.id}` }, () => load())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'photos', filter: `child_id=eq.${child.id}` }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'schedule_template', filter: `child_id=eq.${child.id}` }, () => load())
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
@@ -335,6 +338,9 @@ export default function RecordScreen() {
                 <Text style={styles.sectionEditLink}>편집</Text>
               </TouchableOpacity>
             </View>
+            {template.length === 0 ? (
+              <Text style={styles.emptyNote}>아직 등록된 스케줄이 없어요. 편집을 눌러 추가해보세요.</Text>
+            ) : null}
             {template.map((item) => {
               const log = logs[item.id];
               const unit = scheduleAmountUnit(item.label);

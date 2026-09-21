@@ -6,7 +6,7 @@ export async function listScheduleTemplate(childId: string): Promise<ScheduleTem
     .from('schedule_template')
     .select('*')
     .eq('child_id', childId)
-    .order('sort_order', { ascending: true });
+    .order('time', { ascending: true });
   if (error) throw error;
   return (data ?? []) as ScheduleTemplateItem[];
 }
