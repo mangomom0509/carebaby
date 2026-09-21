@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth-context';
 import { supabase } from '../../lib/supabase';
@@ -328,7 +329,12 @@ export default function RecordScreen() {
           <ActivityIndicator style={{ marginTop: spacing.xl }} color={colors.ink} />
         ) : regularPattern ? (
           <View>
-            <Text style={styles.sectionTitle}>오늘의 스케줄</Text>
+            <View style={styles.sectionTitleRow}>
+              <Text style={styles.sectionTitle}>오늘의 스케줄</Text>
+              <TouchableOpacity onPress={() => router.push('/schedule')} hitSlop={8}>
+                <Text style={styles.sectionEditLink}>편집</Text>
+              </TouchableOpacity>
+            </View>
             {template.map((item) => {
               const log = logs[item.id];
               const unit = scheduleAmountUnit(item.label);
@@ -598,6 +604,8 @@ function createStyles(colors: ColorPalette) {
     modeBtnText: { fontSize: 12.5, fontWeight: '700', color: colors.inkSoft },
     modeBtnTextActive: { color: colors.accentOn },
     sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.ink, marginTop: spacing.lg, marginBottom: spacing.sm },
+    sectionTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    sectionEditLink: { fontSize: 12, fontWeight: '700', color: colors.accentInk },
     emptyNote: { color: colors.inkFaint, fontSize: 12.5, paddingVertical: spacing.md },
     schedRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.line },
     schedTime: { fontWeight: '800', fontSize: 12.5, color: colors.inkSoft, width: 74 },
