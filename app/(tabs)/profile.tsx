@@ -111,6 +111,11 @@ export default function ProfileScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.rowTitle}>스케줄 있음</Text>
             <Text style={styles.rowDesc}>켜면 정해진 스케줄표로, 끄면 타임라인과 기록만으로 기록해요. 기록 탭에서도 바로 바꿀 수 있어요.</Text>
+            {child.regular_pattern ? (
+              <TouchableOpacity onPress={() => router.push('/schedule')} hitSlop={8}>
+                <Text style={styles.editLink}>스케줄 편집하기 →</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
           <Switch
             value={child.regular_pattern}
@@ -205,6 +210,7 @@ function createStyles(colors: ColorPalette) {
     rowItemBorder: { borderTopWidth: 1, borderTopColor: colors.line, marginTop: spacing.md, paddingTop: spacing.md },
     rowTitle: { fontSize: 13.5, fontWeight: '700', color: colors.ink },
     rowDesc: { fontSize: 12, color: colors.inkSoft, marginTop: 4, lineHeight: 17 },
+    editLink: { fontSize: 12, fontWeight: '700', color: colors.accentInk, marginTop: 8 },
     themeRow: { flexDirection: 'row', gap: spacing.sm },
     themeChip: {
       flex: 1,
