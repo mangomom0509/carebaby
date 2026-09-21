@@ -25,6 +25,7 @@ import { getDietGuide, getSleepGuide } from '../../lib/care-guides';
 import { ageMonths, parseISO, toISO, todayStart } from '../../lib/dates';
 import { Icon, type IconName } from '../../lib/icons';
 import { AMOUNT_LEVELS, isFeedLabel, isGramMealLabel, isSnackLabel, isWaterLabel, scheduleAmountUnit } from '../../lib/schedule-labels';
+import { formatTimeInput, normalizeTime } from '../../lib/time-input';
 import { useTheme } from '../../lib/theme-context';
 import { radius, spacing, type ColorPalette } from '../../lib/theme';
 import type { PhotoEntry, RecordEntry, RecordType, ScheduleLogEntry, ScheduleTemplateItem } from '../../lib/types';
@@ -159,7 +160,8 @@ export default function RecordScreen() {
 
   const saveEdit = async () => {
     if (!child || !editingItem) return;
-    if (!/^\d{1,2}:\d{2}$/.test(editTime)) return;
+    const startTime = normalizeTime(editTime);
+    if (!startTime) return;
     setSavingEdit(true);
     try {
       const unit = scheduleAmountUnit(editingItem.label);
@@ -168,7 +170,7 @@ export default function RecordScreen() {
         childId: child.id,
         itemId: editingItem.id,
         date: todayIso,
-        startTime: editTime,
+        startTime,
         amount: unit ? Number(editAmount) || 0 : null,
         level: isLevelType ? editLevel : null,
       });
@@ -247,14 +249,15 @@ export default function RecordScreen() {
   };
   const saveNewRecord = async () => {
     if (!child) return;
-    if (!/^\d{1,2}:\d{2}$/.test(newTime)) return;
+    const time = normalizeTime(newTime);
+    if (!time) return;
     setSavingNew(true);
     try {
       const amountTypes: RecordType[] = ['feed', 'water', 'meal', 'kidmeal', 'snack'];
       await addRecord({
         childId: child.id,
         date: todayIso,
-        time: newTime,
+        time,
         type: newType,
         amount: amountTypes.includes(newType) ? Number(newAmount) || 0 : newType === 'temp' ? parseFloat(newAmount) || 0 : null,
         sub: newType === 'diaper' ? newSub : null,
@@ -512,7 +515,15 @@ export default function RecordScreen() {
                 <Text style={styles.modalTitle}>{editingItem.label}</Text>
                 <Text style={styles.modalSub}>기본 일정은 {fmtScheduleTime(editingItem)}이에요. 오늘 실제 시간을 기록해보세요.</Text>
                 <Text style={styles.fieldLabel}>실제 시간</Text>
-                <TextInput style={styles.input} value={editTime} onChangeText={setEditTime} placeholder="HH:MM" placeholderTextColor={colors.inkFaint} />
+                <TextInput
+                  style={styles.input}
+                  value={editTime}
+                  onChangeText={(t) => setEditTime(formatTimeInput(t))}
+                  placeholder="HH:MM"
+                  placeholderTextColor={colors.inkFaint}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                />
                 {scheduleAmountUnit(editingItem.label) ? (
                   <>
                     <Text style={styles.fieldLabel}>{editingItem.label}량 ({scheduleAmountUnit(editingItem.label)})</Text>
@@ -566,7 +577,15 @@ export default function RecordScreen() {
               ))}
             </View>
             <Text style={styles.fieldLabel}>시간</Text>
-            <TextInput style={styles.input} value={newTime} onChangeText={setNewTime} placeholder="HH:MM" placeholderTextColor={colors.inkFaint} />
+            <TextInput
+              style={styles.input}
+              value={newTime}
+              onChangeText={(t) => setNewTime(formatTimeInput(t))}
+              placeholder="HH:MM"
+              placeholderTextColor={colors.inkFaint}
+              keyboardType="number-pad"
+              maxLength={4}
+            />
             {(['feed', 'water', 'meal', 'kidmeal', 'snack'] as RecordType[]).includes(newType) ? (
               <>
                 <Text style={styles.fieldLabel}>{typeMeta[newType].label}량</Text>

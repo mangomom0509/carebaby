@@ -13,6 +13,7 @@ import {
   unlogScheduleItem,
 } from '../lib/api/schedule';
 import { toISO, todayStart } from '../lib/dates';
+import { formatTimeInput, normalizeTime } from '../lib/time-input';
 import { useTheme } from '../lib/theme-context';
 import { radius, spacing, type ColorPalette } from '../lib/theme';
 import type { ScheduleLogEntry, ScheduleTemplateItem } from '../lib/types';
@@ -103,10 +104,11 @@ export default function ScheduleScreen() {
 
   const saveEdit = async () => {
     if (!child || !editingItem) return;
-    if (!/^\d{2}:\d{2}$/.test(editTime)) return;
+    const startTime = normalizeTime(editTime);
+    if (!startTime) return;
     setSavingEdit(true);
     try {
-      await logScheduleItem({ childId: child.id, itemId: editingItem.id, date: todayIso, startTime: editTime });
+      await logScheduleItem({ childId: child.id, itemId: editingItem.id, date: todayIso, startTime });
       setEditingItem(null);
       await load();
     } finally {
@@ -126,11 +128,11 @@ export default function ScheduleScreen() {
 
   const addItem = async () => {
     if (!child) return;
-    const valid = /^\d{2}:\d{2}$/.test(newTime) && newLabel.trim().length > 0;
-    if (!valid) return;
+    const time = normalizeTime(newTime);
+    if (!time || !newLabel.trim()) return;
     setBusyId('new');
     try {
-      await addScheduleTemplateItem({ childId: child.id, time: newTime, label: newLabel.trim() });
+      await addScheduleTemplateItem({ childId: child.id, time, label: newLabel.trim() });
       setNewTime('');
       setNewLabel('');
       await load();
@@ -194,11 +196,11 @@ export default function ScheduleScreen() {
                 <TextInput
                   style={[styles.input, styles.timeInput]}
                   value={newTime}
-                  onChangeText={setNewTime}
+                  onChangeText={(t) => setNewTime(formatTimeInput(t))}
                   placeholder="HH:MM"
                   placeholderTextColor={colors.inkFaint}
-                  keyboardType="numbers-and-punctuation"
-                  maxLength={5}
+                  keyboardType="number-pad"
+                  maxLength={4}
                 />
                 <TextInput
                   style={[styles.input, { flex: 1 }]}
@@ -225,11 +227,11 @@ export default function ScheduleScreen() {
               <TextInput
                 style={styles.timeEditInput}
                 value={editTime}
-                onChangeText={setEditTime}
+                onChangeText={(t) => setEditTime(formatTimeInput(t))}
                 placeholder="HH:MM"
                 placeholderTextColor={colors.inkFaint}
-                keyboardType="numbers-and-punctuation"
-                maxLength={5}
+                keyboardType="number-pad"
+                maxLength={4}
                 autoFocus
               />
               <View style={styles.modalBtnRow}>
