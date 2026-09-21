@@ -25,7 +25,8 @@ export type IconName =
   | 'snack'
   | 'play'
   | 'star'
-  | 'growth';
+  | 'growth'
+  | 'book';
 
 interface IconProps {
   name: IconName;
@@ -240,6 +241,13 @@ export function Icon({ name, size = 20, color = '#000' }: IconProps) {
         <Svg width={size} height={size} viewBox="0 0 24 24">
           <Path d="M4 18.5 9.5 12l4 3.5L20 7" stroke={color} {...strokeProps} />
           <Path d="M14.5 7H20v5.5" stroke={color} {...strokeProps} />
+        </Svg>
+      );
+    case 'book':
+      return (
+        <Svg width={size} height={size} viewBox="0 0 24 24">
+          <Path d="M12 6.5c-1.6-1.2-3.8-1.8-6.5-1.8v13.6c2.7 0 4.9.6 6.5 1.8" stroke={color} {...strokeProps} />
+          <Path d="M12 6.5c1.6-1.2 3.8-1.8 6.5-1.8v13.6c-2.7 0-4.9.6-6.5 1.8V6.5Z" stroke={color} {...strokeProps} />
         </Svg>
       );
     default:

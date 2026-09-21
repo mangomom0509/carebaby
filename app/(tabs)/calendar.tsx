@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { ActivityIndicator, Alert, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth-context';
 import { listDoneCheckups, markCheckupDone, unmarkCheckupDone } from '../../lib/api/checkups';
@@ -145,14 +146,20 @@ export default function CalendarScreen() {
   return (
     <View style={[styles.screen, { paddingTop: insets.top + spacing.lg }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => goMonth(-1)} hitSlop={10}>
-          <Icon name="chevL" size={18} color={colors.ink} />
-        </TouchableOpacity>
-        <Text style={styles.title}>
-          {year}년 {month}월
-        </Text>
-        <TouchableOpacity onPress={() => goMonth(1)} hitSlop={10}>
-          <Icon name="chevR" size={18} color={colors.ink} />
+        <View style={styles.headerSide} />
+        <View style={styles.monthNav}>
+          <TouchableOpacity onPress={() => goMonth(-1)} hitSlop={10}>
+            <Icon name="chevL" size={18} color={colors.ink} />
+          </TouchableOpacity>
+          <Text style={styles.title}>
+            {year}년 {month}월
+          </Text>
+          <TouchableOpacity onPress={() => goMonth(1)} hitSlop={10}>
+            <Icon name="chevR" size={18} color={colors.ink} />
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity style={styles.headerSide} onPress={() => router.push('/monthly-report')} hitSlop={10}>
+          <Icon name="book" size={19} color={colors.ink} />
         </TouchableOpacity>
       </View>
 
@@ -495,7 +502,9 @@ function DayDetailModal({
 function createStyles(colors: ColorPalette) {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.bg, padding: spacing.lg },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xl, marginBottom: spacing.md },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
+    headerSide: { width: 28, alignItems: 'center' },
+    monthNav: { flexDirection: 'row', alignItems: 'center', gap: spacing.xl },
     title: { fontSize: 18, fontWeight: '800', color: colors.ink },
     weekdayRow: { flexDirection: 'row' },
     weekdayText: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '700', color: colors.inkFaint, marginBottom: spacing.xs },
