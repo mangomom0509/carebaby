@@ -40,3 +40,9 @@ export function bandForAgeMonths(months: number): PlayBand {
 export function playsForBand(band: PlayBand): PlayIdea[] {
   return (PLAY_IDEAS as PlayIdea[]).filter((p) => p.band === band);
 }
+
+const PLAY_BY_ID: Record<string, PlayIdea> = Object.fromEntries((PLAY_IDEAS as PlayIdea[]).map((p) => [p.id, p]));
+
+export function domainsForPlayId(playId: string): DevDomain[] {
+  return PLAY_BY_ID[playId]?.domains ?? [];
+}

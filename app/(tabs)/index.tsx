@@ -389,6 +389,9 @@ export default function HomeScreen() {
             <TouchableOpacity onPress={() => router.push('/play-ideas')}>
               <Text style={[styles.histLink, { marginTop: spacing.sm }]}>월령별 놀이 보기 →</Text>
             </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/peer-stats')}>
+              <Text style={[styles.histLink, { marginTop: spacing.sm }]}>또래 친구들은 이번 주에 →</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.card}>
