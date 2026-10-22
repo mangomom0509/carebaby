@@ -174,6 +174,17 @@ create table monthly_cover_photos (
   primary key (child_id, year, month)
 );
 
+-- Daily "오늘 해봤어요" play-idea logs (repeatable — a play can be logged on
+-- multiple different days, unlike the single-completion *_done tables above).
+create table play_logs (
+  id uuid primary key default gen_random_uuid(),
+  child_id uuid not null references children(id) on delete cascade,
+  play_id text not null, -- matches the id field in lib/data/play-ideas.json
+  played_date date not null,
+  created_at timestamptz not null default now(),
+  unique (child_id, play_id, played_date)
+);
+
 -- ---------------------------------------------------------------------------
 -- Row Level Security
 -- ---------------------------------------------------------------------------
@@ -194,6 +205,7 @@ alter table daily_notes enable row level security;
 alter table photos enable row level security;
 alter table growth_records enable row level security;
 alter table monthly_cover_photos enable row level security;
+alter table play_logs enable row level security;
 
 create or replace function is_family_member(p_family_id uuid)
 returns boolean
@@ -290,6 +302,10 @@ create policy "growth_records: family members full access" on growth_records
   with check (is_family_member(family_id_for_child(child_id)));
 
 create policy "monthly_cover_photos: family members full access" on monthly_cover_photos
+  for all using (is_family_member(family_id_for_child(child_id)))
+  with check (is_family_member(family_id_for_child(child_id)));
+
+create policy "play_logs: family members full access" on play_logs
   for all using (is_family_member(family_id_for_child(child_id)))
   with check (is_family_member(family_id_for_child(child_id)));
 

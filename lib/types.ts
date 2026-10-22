@@ -135,3 +135,11 @@ export interface GrowthRecord {
   head_circumference_cm: number | null;
   created_at: string;
 }
+
+export interface PlayLog {
+  id: string;
+  child_id: string;
+  play_id: string;
+  played_date: string;
+  created_at: string;
+}

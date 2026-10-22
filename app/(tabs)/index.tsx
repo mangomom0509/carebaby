@@ -386,6 +386,9 @@ export default function HomeScreen() {
             <TouchableOpacity onPress={() => router.push('/dev-check')}>
               <Text style={[styles.histLink, { marginTop: spacing.md }]}>체크리스트 전체 보기 →</Text>
             </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/play-ideas')}>
+              <Text style={[styles.histLink, { marginTop: spacing.sm }]}>월령별 놀이 보기 →</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.card}>
