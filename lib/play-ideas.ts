@@ -5,7 +5,7 @@
 import PLAY_IDEAS from './data/play-ideas.json';
 import type { DevDomain } from './dev-milestones';
 
-export type PlayBand = '0-3' | '4-6' | '7-9' | '10-12' | '13-18' | '19-24';
+export type PlayBand = '0-3' | '4-6' | '7-9' | '10-12' | '13-18' | '19-24' | '25-30' | '31-36';
 
 export interface PlayIdea {
   id: string;
@@ -26,6 +26,8 @@ export const PLAY_BANDS: { id: PlayBand; label: string }[] = [
   { id: '10-12', label: '10~12개월' },
   { id: '13-18', label: '13~18개월' },
   { id: '19-24', label: '19~24개월' },
+  { id: '25-30', label: '25~30개월' },
+  { id: '31-36', label: '31~36개월' },
 ];
 
 export function bandForAgeMonths(months: number): PlayBand {
@@ -34,7 +36,9 @@ export function bandForAgeMonths(months: number): PlayBand {
   if (months <= 9) return '7-9';
   if (months <= 12) return '10-12';
   if (months <= 18) return '13-18';
-  return '19-24';
+  if (months <= 24) return '19-24';
+  if (months <= 30) return '25-30';
+  return '31-36';
 }
 
 export function playsForBand(band: PlayBand): PlayIdea[] {
